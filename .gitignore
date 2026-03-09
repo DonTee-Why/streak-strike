@@ -5,3 +5,7 @@ node_modules
 .cursor
 .vscode
 .next
+coverage
+out
+public/sw.js
+public/workbox-*.js
