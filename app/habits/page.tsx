@@ -83,8 +83,17 @@ function HabitCalendarScreen() {
         <CalendarGrid days={calendarDays} onTapDay={(date) => void toggleDate(habitId, date)} />
       </section>
 
-      <section className="rounded-2xl border border-line bg-white/80 p-4 text-sm text-muted">
+      <section className="space-y-3 rounded-2xl border border-line bg-white/80 p-4 text-sm text-muted">
         <p>Legend: X = completed, highlighted = markable, muted = locked/missed.</p>
+        <div className="rounded-xl border border-line bg-[#fff7ea] p-3 text-[#5e3a10]">
+          <p className="text-xs font-semibold uppercase tracking-wide">Grace Period Rules</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+            <li>Today can be marked and unmarked.</li>
+            <li>The previous 1-3 days can be marked only if currently unmarked.</li>
+            <li>Once a grace day is marked, it becomes permanently locked.</li>
+            <li>Days older than 3 days are permanently locked.</li>
+          </ul>
+        </div>
       </section>
 
       {isLoading ? <p className="text-sm text-muted">Syncing...</p> : null}
