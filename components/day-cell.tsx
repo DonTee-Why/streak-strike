@@ -10,20 +10,20 @@ interface DayCellProps {
 function stateClass(state: MonthGridDay["state"]): string {
   switch (state) {
     case "today_open":
-      return "border-ink/60 bg-white";
+      return "border-ink bg-white text-ink";
     case "today_done":
-      return "border-ink bg-white";
+      return "border-[#2f6f4f] bg-[#dcefdc] text-ink";
     case "grace_open":
-      return "border-[#D4A373]/70 bg-[#fffaf2]";
+      return "border-[#b66a1a] bg-[#fff1de] text-[#5e3a10]";
     case "grace_done_locked":
-      return "border-line bg-[#eef4e4]";
+      return "border-[#4b7f60] bg-[#d7ead9] text-ink";
     case "expired_done":
-      return "border-line bg-[#e9f0df]";
+      return "border-[#6d846f] bg-[#c8dec9] text-ink";
     case "expired_missed":
-      return "border-line bg-[#f4f5ef] text-muted";
+      return "border-[#8f958c] bg-[#eceee9] text-[#687064]";
     case "future":
     default:
-      return "border-line bg-white/40 text-muted";
+      return "border-[#cfd5c5] bg-[#f7f8f3] text-[#9aa191]";
   }
 }
 
@@ -40,10 +40,11 @@ export function DayCell({ day, onTap }: DayCellProps) {
       } ${canTap ? "cursor-pointer" : "cursor-not-allowed"}`}
       aria-label={`${day.date} ${day.state}`}
     >
-      <span>{day.day}</span>
+      <span className="relative z-10 font-semibold">{day.day}</span>
       {day.completed ? (
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-lg font-bold text-[#d14b3f] animate-draw-x">
-          X
+        <span className="pointer-events-none absolute inset-0 z-20 animate-draw-x">
+          <span className="absolute left-1/2 top-1/2 h-[3px] w-[88%] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-[#c93f32]" />
+          <span className="absolute left-1/2 top-1/2 h-[3px] w-[88%] -translate-x-1/2 -translate-y-1/2 -rotate-45 rounded-full bg-[#c93f32]" />
         </span>
       ) : null}
     </button>
