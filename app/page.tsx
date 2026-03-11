@@ -19,7 +19,10 @@ export default function HabitListPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">StreakStrike</p>
           <h1 className="text-2xl font-bold">Your Habits</h1>
         </div>
-        <Link href="/new" className="rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-canvas">
+        <Link
+          href="/new"
+          className="inline-flex items-center rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+        >
           New Habit
         </Link>
       </header>
