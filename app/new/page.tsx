@@ -22,7 +22,7 @@ export default function NewHabitPage() {
         isSubmitting={isLoading}
         onSubmit={async (values) => {
           const habitId = await addHabit(values);
-          router.push(`/habits/${habitId}`);
+          router.push(`/habits?habitId=${habitId}`);
         }}
       />
     </main>

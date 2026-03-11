@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+@theme inline {
+  --color-canvas: #f2f4ea;
+  --color-ink: #1f2d1f;
+  --color-muted: #6d7461;
+  --color-line: #d2d8c7;
+}
+
 :root {
   color-scheme: light;
 }
@@ -14,11 +21,6 @@ body {
   background: radial-gradient(circle at 20% 10%, #ffffff, #f2f4ea 50%, #e5ebd8 100%);
   color: #1f2d1f;
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
 }
 
 button,

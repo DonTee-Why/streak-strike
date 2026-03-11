@@ -69,3 +69,48 @@ Streaks are derived from completion history and can be cached, but cache is rebu
 - Installable web app via `manifest.webmanifest`
 - Service worker generated in production (`next-pwa`) for offline shell/static assets
 - All habit data remains local in IndexedDB on device
+
+## Desktop (Tauri v2)
+
+### Prerequisites
+
+- Node.js and npm
+- Rust toolchain (`rustup`)
+- Platform build tooling required by Tauri:
+  - Windows: Visual Studio C++ Build Tools + WebView2
+  - macOS: Xcode Command Line Tools
+  - Linux: `webkit2gtk` and related GTK/WebKit dependencies
+
+### Development
+
+Run the desktop app with the Next.js dev server:
+
+```bash
+npm run desktop:dev
+```
+
+This runs `next dev` on `http://localhost:3003` and opens it in a Tauri window.
+
+### Production Desktop Build
+
+Build the web assets for desktop packaging:
+
+```bash
+npm run build:desktop:web
+```
+
+Then package the desktop app:
+
+```bash
+npm run desktop:build
+```
+
+Desktop bundles/installers are generated under:
+
+`src-tauri/target/release/bundle/*` (platform dependent)
+
+### Next.js + Tauri Notes
+
+- Desktop packaging uses a conditional static export path (`TAURI_DESKTOP_EXPORT=1`) so Tauri can load `out/` as local assets.
+- PWA service worker generation is disabled for desktop export builds to avoid packaging conflicts.
+- Habit route uses query params in desktop-compatible static output (`/habits?habitId=...`) while preserving app behavior and business logic.

@@ -9,3 +9,4 @@ coverage
 out
 public/sw.js
 public/workbox-*.js
+src-tauri/target

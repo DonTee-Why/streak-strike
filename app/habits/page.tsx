@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { CalendarGrid } from "@/components/calendar-grid";
 import { StreakSummary } from "@/components/streak-summary";
@@ -14,9 +15,9 @@ function monthLabel(year: number, month: number): string {
   });
 }
 
-export default function HabitCalendarPage() {
-  const params = useParams<{ habitId: string }>();
-  const habitId = params.habitId;
+function HabitCalendarScreen() {
+  const searchParams = useSearchParams();
+  const habitId = searchParams.get("habitId") ?? "";
 
   const {
     calendarDays,
@@ -37,6 +38,19 @@ export default function HabitCalendarPage() {
       void loadHabitCalendar(habitId);
     }
   }, [habitId, loadHabitCalendar]);
+
+  if (!habitId) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-4 py-8 sm:px-6">
+        <header className="flex items-center justify-between">
+          <Link href="/" className="text-sm text-muted underline">Back</Link>
+        </header>
+        <p className="rounded-lg border border-line bg-white/80 p-4 text-sm text-muted">
+          No habit selected.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-5 px-4 py-8 sm:px-6">
@@ -76,5 +90,19 @@ export default function HabitCalendarPage() {
       {isLoading ? <p className="text-sm text-muted">Syncing...</p> : null}
       {error ? <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
     </main>
+  );
+}
+
+export default function HabitCalendarPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-4 px-4 py-8 sm:px-6">
+          <p className="text-sm text-muted">Loading calendar...</p>
+        </main>
+      }
+    >
+      <HabitCalendarScreen />
+    </Suspense>
   );
 }
