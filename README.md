@@ -2,6 +2,20 @@
 
 StreakStrike is a private habit discipline PWA. Each habit has its own calendar, and completion is tracked by crossing out local calendar days.
 
+## Rollover Sync Note
+
+The app previously had a stale-date bug when it stayed open across local midnight: UI state and write actions could continue using the previous day as `today`, which could misclassify grace days, stale streaks, and target the wrong date.
+
+The app now keeps `today` as synchronized local `YYYY-MM-DD` state and refreshes date-sensitive data on:
+
+- app initialization
+- the next local midnight timer
+- window focus
+- visibility recovery / `pageshow`
+- before any mark or unmark write action
+
+Caveat: if the device timezone is manually changed while the app is open, the app will adopt the new local calendar day the next time one of those sync triggers runs.
+
 ## Setup
 
 1. Install dependencies:

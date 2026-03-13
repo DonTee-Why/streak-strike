@@ -20,6 +20,7 @@ interface HabitListItem {
 }
 
 interface HabitsStoreState {
+  today: string;
   habits: HabitListItem[];
   currentHabitId?: string;
   calendarDays: MonthGridDay[];
@@ -30,6 +31,9 @@ interface HabitsStoreState {
   totalCompletions: number;
   isLoading: boolean;
   error?: string;
+  syncToday: () => Promise<string>;
+  ensureFreshToday: () => Promise<string>;
+  refreshForTodayChange: (nextToday: string) => Promise<void>;
   loadHabits: () => Promise<void>;
   addHabit: (input: { name: string; color: string; startDate: string }) => Promise<string>;
   loadHabitCalendar: (habitId: string, year?: number, month?: number) => Promise<void>;
@@ -37,54 +41,37 @@ interface HabitsStoreState {
   toggleDate: (habitId: string, targetDate: string) => Promise<void>;
 }
 
-const todayYmd = getYmd(getLocalToday());
+export const useHabitsStore = create<HabitsStoreState>((set, get) => {
+  const initialToday = getLocalToday();
+  const initialTodayYmd = getYmd(initialToday);
+  let syncPromise: Promise<string> | null = null;
 
-export const useHabitsStore = create<HabitsStoreState>((set, get) => ({
-  habits: [],
-  calendarDays: [],
-  viewedYear: todayYmd.year,
-  viewedMonth: todayYmd.month,
-  currentStreak: 0,
-  longestStreak: 0,
-  totalCompletions: 0,
-  isLoading: false,
-  async loadHabits() {
+  const loadHabitsForToday = async (today: string) => {
     set({ isLoading: true, error: undefined });
     try {
       const habits = await getHabits();
       const withStreaks = await Promise.all(
         habits.map(async (habit) => ({
           habit,
-          currentStreak: (await getHabitStreaks(habit.id)).currentStreak,
+          currentStreak: (await getHabitStreaks(habit.id, today)).currentStreak,
         })),
       );
       set({ habits: withStreaks, isLoading: false });
     } catch (error) {
       set({ error: error instanceof Error ? error.message : "Failed to load habits", isLoading: false });
     }
-  },
-  async addHabit(input) {
-    set({ isLoading: true, error: undefined });
-    try {
-      const habit = await createHabit(input);
-      await get().loadHabits();
-      set({ isLoading: false });
-      return habit.id;
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : "Failed to create habit", isLoading: false });
-      throw error;
-    }
-  },
-  async loadHabitCalendar(habitId, year, month) {
-    const fallback = getYmd(getLocalToday());
+  };
+
+  const loadHabitCalendarForToday = async (habitId: string, year: number | undefined, month: number | undefined, today: string) => {
+    const fallback = getYmd(today);
     const targetYear = year ?? get().viewedYear ?? fallback.year;
     const targetMonth = month ?? get().viewedMonth ?? fallback.month;
 
     set({ isLoading: true, error: undefined, currentHabitId: habitId, viewedYear: targetYear, viewedMonth: targetMonth });
     try {
       const [calendarDays, streaks] = await Promise.all([
-        getHabitCalendarMonth({ habitId, year: targetYear, month: targetMonth }),
-        getHabitStreaks(habitId),
+        getHabitCalendarMonth({ habitId, year: targetYear, month: targetMonth, today }),
+        getHabitStreaks(habitId, today),
       ]);
       set({
         calendarDays,
@@ -96,33 +83,101 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => ({
     } catch (error) {
       set({ error: error instanceof Error ? error.message : "Failed to load calendar", isLoading: false });
     }
-  },
-  async moveMonth(habitId, delta) {
-    const { viewedYear, viewedMonth } = get();
-    const nextDate = new Date(viewedYear, viewedMonth - 1 + delta, 1, 12);
-    await get().loadHabitCalendar(habitId, nextDate.getFullYear(), nextDate.getMonth() + 1);
-  },
-  async toggleDate(habitId, targetDate) {
-    const today = getLocalToday();
-    set({ isLoading: true, error: undefined });
-    try {
-      if (targetDate === today) {
-        await toggleToday(habitId, today);
-      } else {
-        await markGraceDayOnce(habitId, targetDate, today);
+  };
+
+  const refreshForTodayChange = async (nextToday: string) => {
+    const { currentHabitId, viewedYear, viewedMonth } = get();
+    await loadHabitsForToday(nextToday);
+    if (currentHabitId) {
+      await loadHabitCalendarForToday(currentHabitId, viewedYear, viewedMonth, nextToday);
+    }
+  };
+
+  return {
+    today: initialToday,
+    habits: [],
+    calendarDays: [],
+    viewedYear: initialTodayYmd.year,
+    viewedMonth: initialTodayYmd.month,
+    currentStreak: 0,
+    longestStreak: 0,
+    totalCompletions: 0,
+    isLoading: false,
+    async syncToday() {
+      if (syncPromise) {
+        return syncPromise;
       }
 
-      await Promise.all([
-        get().loadHabitCalendar(habitId, get().viewedYear, get().viewedMonth),
-        get().loadHabits(),
-      ]);
-      set({ isLoading: false });
-    } catch (error) {
-      if (error instanceof HabitRuleError) {
-        set({ error: error.message, isLoading: false });
-        return;
+      syncPromise = (async () => {
+        const actualToday = getLocalToday();
+        if (get().today === actualToday) {
+          return actualToday;
+        }
+
+        set({ today: actualToday });
+        await refreshForTodayChange(actualToday);
+        return actualToday;
+      })();
+
+      try {
+        return await syncPromise;
+      } finally {
+        syncPromise = null;
       }
-      set({ error: error instanceof Error ? error.message : "Failed to update day", isLoading: false });
+    },
+    async ensureFreshToday() {
+      return get().syncToday();
+    },
+    async refreshForTodayChange(nextToday) {
+      await refreshForTodayChange(nextToday);
+    },
+    async loadHabits() {
+      const today = await get().ensureFreshToday();
+      await loadHabitsForToday(today);
+    },
+    async addHabit(input) {
+    set({ isLoading: true, error: undefined });
+    try {
+      const habit = await createHabit(input);
+      await get().loadHabits();
+      set({ isLoading: false });
+      return habit.id;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : "Failed to create habit", isLoading: false });
+      throw error;
     }
-  },
-}));
+    },
+    async loadHabitCalendar(habitId, year, month) {
+      const today = await get().ensureFreshToday();
+      await loadHabitCalendarForToday(habitId, year, month, today);
+    },
+    async moveMonth(habitId, delta) {
+      const { viewedYear, viewedMonth } = get();
+      const nextDate = new Date(viewedYear, viewedMonth - 1 + delta, 1, 12);
+      await get().loadHabitCalendar(habitId, nextDate.getFullYear(), nextDate.getMonth() + 1);
+    },
+    async toggleDate(habitId, targetDate) {
+      const today = await get().ensureFreshToday();
+      set({ isLoading: true, error: undefined });
+      try {
+        if (targetDate === today) {
+          await toggleToday(habitId, today);
+        } else {
+          await markGraceDayOnce(habitId, targetDate, today);
+        }
+
+        await Promise.all([
+          loadHabitCalendarForToday(habitId, get().viewedYear, get().viewedMonth, today),
+          loadHabitsForToday(today),
+        ]);
+        set({ isLoading: false });
+      } catch (error) {
+        if (error instanceof HabitRuleError) {
+          set({ error: error.message, isLoading: false });
+          return;
+        }
+        set({ error: error instanceof Error ? error.message : "Failed to update day", isLoading: false });
+      }
+    },
+  };
+});

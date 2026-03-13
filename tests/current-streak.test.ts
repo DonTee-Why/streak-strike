@@ -25,4 +25,11 @@ describe("current streak", () => {
 
     await expect(calculateCurrentStreak("2026-03-01", loader)).resolves.toBe(4);
   });
+
+  it("drops to zero after rollover if the new today is incomplete", async () => {
+    const march = makeMonth("h", 2026, 3, [9]);
+    const loader = async (year: number, month: number) => (year === 2026 && month === 3 ? march : undefined);
+
+    await expect(calculateCurrentStreak("2026-03-10", loader)).resolves.toBe(0);
+  });
 });

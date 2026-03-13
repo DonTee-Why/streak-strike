@@ -22,4 +22,8 @@ describe("day state derivation", () => {
     expect(deriveDayState({ targetDate: "2026-03-05", today, isCompleted: false })).toBe("expired_missed");
     expect(deriveDayState({ targetDate: "2026-03-04", today, isCompleted: true })).toBe("expired_done");
   });
+
+  it("reclassifies a former today as a grace day after rollover", () => {
+    expect(deriveDayState({ targetDate: "2026-03-09", today: "2026-03-10", isCompleted: false })).toBe("grace_open");
+  });
 });

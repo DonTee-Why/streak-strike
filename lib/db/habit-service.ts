@@ -30,9 +30,8 @@ async function isCompletedOnDate(habitId: string, date: string): Promise<boolean
   return monthRecord.bits[day - 1] === "1";
 }
 
-async function refreshStats(habitId: string): Promise<void> {
+async function refreshStats(habitId: string, today = getLocalToday()): Promise<void> {
   const months = await listHabitMonths(habitId);
-  const today = getLocalToday();
   const currentStreak = await calculateCurrentStreak(today, async (year, month) =>
     getHabitMonth(habitId, year, month),
   );
@@ -59,7 +58,7 @@ export async function createHabit(input: { name: string; color: string; startDat
   };
 
   await createHabitRecord(habit);
-  await refreshStats(habit.id);
+  await refreshStats(habit.id, today);
   return habit;
 }
 
@@ -82,7 +81,7 @@ export async function toggleToday(habitId: string, today = getLocalToday()): Pro
     await markHabitDay(habitId, year, month, day);
   }
 
-  await refreshStats(habitId);
+  await refreshStats(habitId, today);
 }
 
 export async function markGraceDayOnce(
@@ -104,7 +103,7 @@ export async function markGraceDayOnce(
 
   const { year, month, day } = getYmd(targetDate);
   await markHabitDay(habitId, year, month, day);
-  await refreshStats(habitId);
+  await refreshStats(habitId, today);
 }
 
 function toMonthMap(months: HabitMonth[]): Map<string, HabitMonth> {
@@ -141,12 +140,14 @@ export async function getHabitCalendarMonth(input: {
   });
 }
 
-export async function getHabitStreaks(habitId: string): Promise<{
+export async function getHabitStreaks(
+  habitId: string,
+  today = getLocalToday(),
+): Promise<{
   currentStreak: number;
   longestStreak: number;
   totalCompletions: number;
 }> {
-  const today = getLocalToday();
   const months = await listHabitMonths(habitId);
 
   const currentStreak = await calculateCurrentStreak(today, async (year, month) =>

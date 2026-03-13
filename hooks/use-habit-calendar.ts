@@ -6,6 +6,7 @@ import { useHabitsStore } from "@/store/habits-store";
 export function useHabitCalendar() {
   return useHabitsStore(
     useShallow((state) => ({
+      today: state.today,
       currentHabitId: state.currentHabitId,
       calendarDays: state.calendarDays,
       viewedYear: state.viewedYear,

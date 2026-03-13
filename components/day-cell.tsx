@@ -29,6 +29,7 @@ function stateClass(state: MonthGridDay["state"]): string {
 
 export function DayCell({ day, onTap }: DayCellProps) {
   const canTap = day.inMonth && day.markable;
+  const isToday = day.state === "today_open" || day.state === "today_done";
 
   return (
     <button
@@ -37,9 +38,14 @@ export function DayCell({ day, onTap }: DayCellProps) {
       disabled={!canTap}
       className={`relative flex h-12 w-full items-center justify-center rounded-lg border text-sm ${stateClass(day.state)} ${
         day.inMonth ? "" : "opacity-45"
-      } ${canTap ? "cursor-pointer" : "cursor-not-allowed"}`}
+      } ${canTap ? "cursor-pointer" : "cursor-not-allowed"} ${isToday ? "ring-2 ring-[#2f6f4f]/25 ring-offset-1" : ""}`}
       aria-label={`${day.date} ${day.state}`}
     >
+      {isToday ? (
+        <span className="absolute left-1 top-1 rounded-full bg-[#2f6f4f] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+          Today
+        </span>
+      ) : null}
       <span className="relative z-10 font-semibold">{day.day}</span>
       {day.completed ? (
         <span className="pointer-events-none absolute inset-0 z-20 animate-draw-x">

@@ -11,8 +11,20 @@ export function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getCurrentLocalDate(now: Date = new Date()): string {
+  return formatLocalDate(now);
+}
+
 export function getLocalToday(): string {
-  return formatLocalDate(new Date());
+  return getCurrentLocalDate();
+}
+
+export function getNextLocalMidnight(now: Date = new Date()): Date {
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+}
+
+export function getMsUntilNextLocalMidnight(now: Date = new Date()): number {
+  return Math.max(0, getNextLocalMidnight(now).getTime() - now.getTime());
 }
 
 export function parseLocalDate(dateStr: string): Date {
