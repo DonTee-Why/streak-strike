@@ -8,13 +8,27 @@ function makeMonth(habitId: string, year: number, month: number, doneDays: numbe
 }
 
 describe("current streak", () => {
-  it("returns 0 if today is incomplete", async () => {
-    const march = makeMonth("h", 2026, 3, [8]);
+  it("counts backward from yesterday if today is incomplete", async () => {
+    const march = makeMonth("h", 2026, 3, [6, 7, 8]);
     const loader = async (year: number, month: number) => (year === 2026 && month === 3 ? march : undefined);
+    await expect(calculateCurrentStreak("2026-03-09", loader)).resolves.toBe(3);
+  });
+
+  it("includes today when today is completed", async () => {
+    const march = makeMonth("h", 2026, 3, [6, 7, 8, 9]);
+    const loader = async (year: number, month: number) => (year === 2026 && month === 3 ? march : undefined);
+
+    await expect(calculateCurrentStreak("2026-03-09", loader)).resolves.toBe(4);
+  });
+
+  it("returns 0 when both today and yesterday are incomplete", async () => {
+    const march = makeMonth("h", 2026, 3, [6]);
+    const loader = async (year: number, month: number) => (year === 2026 && month === 3 ? march : undefined);
+
     await expect(calculateCurrentStreak("2026-03-09", loader)).resolves.toBe(0);
   });
 
-  it("crosses month boundary", async () => {
+  it("crosses month boundary when today is completed", async () => {
     const march = makeMonth("h", 2026, 3, [1]);
     const feb = makeMonth("h", 2026, 2, [26, 27, 28]);
     const loader = async (year: number, month: number) => {
@@ -26,10 +40,22 @@ describe("current streak", () => {
     await expect(calculateCurrentStreak("2026-03-01", loader)).resolves.toBe(4);
   });
 
-  it("drops to zero after rollover if the new today is incomplete", async () => {
-    const march = makeMonth("h", 2026, 3, [9]);
+  it("crosses month boundary from yesterday when today is incomplete", async () => {
+    const march = makeMonth("h", 2026, 3, []);
+    const feb = makeMonth("h", 2026, 2, [26, 27, 28]);
+    const loader = async (year: number, month: number) => {
+      if (year === 2026 && month === 3) return march;
+      if (year === 2026 && month === 2) return feb;
+      return undefined;
+    };
+
+    await expect(calculateCurrentStreak("2026-03-01", loader)).resolves.toBe(3);
+  });
+
+  it("stops at the first missed day before yesterday", async () => {
+    const march = makeMonth("h", 2026, 3, [6, 8]);
     const loader = async (year: number, month: number) => (year === 2026 && month === 3 ? march : undefined);
 
-    await expect(calculateCurrentStreak("2026-03-10", loader)).resolves.toBe(0);
+    await expect(calculateCurrentStreak("2026-03-09", loader)).resolves.toBe(1);
   });
 });

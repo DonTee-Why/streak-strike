@@ -27,10 +27,10 @@ Streak values may optionally be cached for performance but must always be rebuil
 
 Steps:
 
-1. Start from today's date
-2. Check if the day is completed
-3. If not completed, streak = 0
-4. If completed, begin counting backward
+1. Check whether today is completed
+2. If today is completed, start from today
+3. If today is not completed, start from yesterday
+4. If the chosen start day is not completed, streak = 0
 5. Continue scanning previous days
 6. Stop when the first incomplete day is found
 
@@ -38,6 +38,7 @@ If the scan reaches the start of the month, the algorithm loads the previous mon
 
 Example:
 
+June 2 → not completed
 June 1 → completed
 May 31 → completed
 May 30 → completed

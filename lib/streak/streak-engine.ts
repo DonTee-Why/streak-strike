@@ -16,13 +16,16 @@ export async function calculateCurrentStreak(
 ): Promise<number> {
   const todayYmd = getYmd(today);
   const todayRecord = await monthLoader(todayYmd.year, todayYmd.month);
+  const startDate = isDateCompletedInMonth(todayRecord, todayYmd.day) ? today : addDays(today, -1);
 
-  if (!isDateCompletedInMonth(todayRecord, todayYmd.day)) {
+  const startYmd = getYmd(startDate);
+  const startRecord = await monthLoader(startYmd.year, startYmd.month);
+  if (!isDateCompletedInMonth(startRecord, startYmd.day)) {
     return 0;
   }
 
   let streak = 0;
-  let cursor = today;
+  let cursor = startDate;
 
   while (true) {
     const { year, month, day } = getYmd(cursor);

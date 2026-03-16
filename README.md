@@ -71,9 +71,9 @@ Streaks are derived from completion history and can be cached, but cache is rebu
 ## Streak Rules
 
 - Current streak:
-  - starts at today
-  - if today incomplete, streak is `0`
-  - otherwise scans backward day-by-day across month boundaries
+  - starts at today if today is completed, otherwise starts at yesterday
+  - scans backward day-by-day across month boundaries
+  - returns `0` only if neither today nor yesterday starts a completed run
 - Longest streak:
   - iterates all completion history chronologically
   - tracks max contiguous completed run
