@@ -4,6 +4,7 @@ import type { Habit } from "@/types/habit";
 const currentToday = vi.hoisted(() => ({ value: "2026-03-09" }));
 const serviceMocks = vi.hoisted(() => ({
   createHabit: vi.fn(),
+  getHabit: vi.fn(),
   getHabitCalendarMonth: vi.fn(),
   getHabits: vi.fn(),
   getHabitStreaks: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock("@/lib/date/local-date", async () => {
 vi.mock("@/lib/db/habit-service", () => ({
   HabitRuleError: class HabitRuleError extends Error {},
   createHabit: serviceMocks.createHabit,
+  getHabit: serviceMocks.getHabit,
   getHabitCalendarMonth: serviceMocks.getHabitCalendarMonth,
   getHabits: serviceMocks.getHabits,
   getHabitStreaks: serviceMocks.getHabitStreaks,
@@ -49,6 +51,7 @@ describe("habits store day sync", () => {
     currentToday.value = "2026-03-09";
     vi.clearAllMocks();
     serviceMocks.createHabit.mockResolvedValue(habit);
+    serviceMocks.getHabit.mockResolvedValue(habit);
     serviceMocks.getHabits.mockResolvedValue([habit]);
     serviceMocks.getHabitStreaks.mockResolvedValue(streaks);
     serviceMocks.getHabitCalendarMonth.mockResolvedValue([]);
@@ -95,5 +98,14 @@ describe("habits store day sync", () => {
       today: "2026-03-10",
     });
     expect(serviceMocks.getHabitStreaks).toHaveBeenCalledWith("habit_1", "2026-03-10");
+  });
+
+  it("stores the active habit details when loading a calendar", async () => {
+    const useHabitsStore = await loadStore();
+
+    await useHabitsStore.getState().loadHabitCalendar("habit_1", 2026, 3);
+
+    expect(serviceMocks.getHabit).toHaveBeenCalledWith("habit_1");
+    expect(useHabitsStore.getState().currentHabit).toEqual(habit);
   });
 });

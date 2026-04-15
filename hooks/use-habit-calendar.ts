@@ -7,6 +7,7 @@ export function useHabitCalendar() {
   return useHabitsStore(
     useShallow((state) => ({
       today: state.today,
+      currentHabit: state.currentHabit,
       currentHabitId: state.currentHabitId,
       calendarDays: state.calendarDays,
       viewedYear: state.viewedYear,

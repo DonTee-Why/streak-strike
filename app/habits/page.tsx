@@ -34,6 +34,7 @@ function HabitCalendarScreen() {
 
   const {
     today,
+    currentHabit,
     calendarDays,
     viewedYear,
     viewedMonth,
@@ -79,7 +80,10 @@ function HabitCalendarScreen() {
         <button type="button" onClick={() => void handleBack()} className="text-sm text-muted underline">
           Back
         </button>
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Habit Calendar</p>
+        <div className="text-right">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Habit Calendar</p>
+          <p className="text-sm font-medium text-ink">{currentHabit?.name ?? "Loading habit..."}</p>
+        </div>
       </header>
 
       <StreakSummary currentStreak={currentStreak} longestStreak={longestStreak} totalCompletions={totalCompletions} />

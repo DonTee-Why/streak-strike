@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import {
   createHabit,
+  getHabit,
   getHabitCalendarMonth,
   getHabits,
   getHabitStreaks,
@@ -22,6 +23,7 @@ interface HabitListItem {
 interface HabitsStoreState {
   today: string;
   habits: HabitListItem[];
+  currentHabit?: Habit;
   currentHabitId?: string;
   calendarDays: MonthGridDay[];
   viewedYear: number;
@@ -69,11 +71,13 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
 
     set({ isLoading: true, error: undefined, currentHabitId: habitId, viewedYear: targetYear, viewedMonth: targetMonth });
     try {
-      const [calendarDays, streaks] = await Promise.all([
+      const [habit, calendarDays, streaks] = await Promise.all([
+        getHabit(habitId),
         getHabitCalendarMonth({ habitId, year: targetYear, month: targetMonth, today }),
         getHabitStreaks(habitId, today),
       ]);
       set({
+        currentHabit: habit,
         calendarDays,
         currentStreak: streaks.currentStreak,
         longestStreak: streaks.longestStreak,
@@ -96,6 +100,7 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
   return {
     today: initialToday,
     habits: [],
+    currentHabit: undefined,
     calendarDays: [],
     viewedYear: initialTodayYmd.year,
     viewedMonth: initialTodayYmd.month,

@@ -66,6 +66,10 @@ export async function getHabits(): Promise<Habit[]> {
   return listHabits();
 }
 
+export async function getHabit(habitId: string): Promise<Habit | undefined> {
+  return getHabitById(habitId);
+}
+
 export async function toggleToday(habitId: string, today = getLocalToday()): Promise<void> {
   const habit = await getHabitById(habitId);
   if (!habit) {
