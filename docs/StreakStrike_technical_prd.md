@@ -341,3 +341,67 @@ The system must:
 • support multiple habits
 
 All functionality must remain fast even on low powered mobile devices.
+
+# 15. Habit Deletion
+
+## 15.1 Deletion Strategy
+
+Habit deletion will use **application-level cascading deletion**.
+
+When a habit is deleted, the system must:
+
+• delete the habit record  
+• delete all associated HabitMonth records  
+• delete any cached HabitStats  
+
+This must be done inside a single transaction.
+
+---
+
+## 15.2 Dexie Implementation
+
+Deletion must use a where-based delete pattern.
+
+Example:
+
+db.transaction('rw', db.habits, db.habitMonths, db.habitStats, () => {
+  db.habitMonths.where({ habitId }).delete()
+  db.habitStats.where({ habitId }).delete()
+  db.habits.delete(habitId)
+})
+
+This ensures no orphaned records remain.
+
+This aligns with best practices for consistent deletion operations in Dexie.  [oai_citation:0‡dexie.org](https://dexie.org/docs/cloud/best-practices?utm_source=chatgpt.com)
+
+---
+
+## 15.3 No Database-Level Cascade
+
+Deletion logic must remain in the application layer.
+
+Do NOT rely on implicit cascade behavior.
+
+This prevents unintended data loss and improves control.
+
+---
+
+## 15.4 Metric Computation
+
+Add helper functions:
+
+getDaysSinceStart(startDate, today)
+
+getTotalCompletions(habitId)
+
+getCompletionRate(totalCompletions, daysSinceStart)
+
+These must operate on bitsets.
+
+---
+
+## 15.5 Data Integrity Rules
+
+• startDate must not be in the future  
+• completionRate must be clamped between 0 and 1  
+• daysSinceStart must be ≥ 1

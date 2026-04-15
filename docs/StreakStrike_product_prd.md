@@ -223,3 +223,70 @@ Future versions may introduce:
 • visual discipline timelines
 
 However, the product must always remain focused on **discipline rather than productivity management**.
+
+# 13. Habit Lifecycle & Metrics
+
+## 13.1 Delete Habit
+
+Users can permanently delete a habit.
+
+Behavior:
+
+• Habit is removed from the habit list  
+• All associated completion history is removed  
+• All derived statistics are removed  
+
+The delete action must require confirmation.
+
+Example:
+
+“This will permanently delete this habit and all its history.”
+
+Deletion is irreversible.
+
+---
+
+## 13.2 Habit Metadata Display
+
+Each habit must display its start date.
+
+Example:
+
+Start Date: March 1, 2026
+
+---
+
+## 13.3 Habit Metrics
+
+The following metrics must be displayed for each habit:
+
+• Start Date  
+• Days Since Start  
+• Total Completions  
+• Completion Rate  
+• Current Streak  
+• Longest Streak  
+
+---
+
+## 13.4 Metric Definitions
+
+Days Since Start:
+
+Number of calendar days from startDate to today (inclusive).
+
+Total Completions:
+
+Total number of completed days since startDate.
+
+Completion Rate:
+
+totalCompletions / daysSinceStart
+
+---
+
+## 13.5 UI Placement
+
+Metrics should be displayed on the Habit Calendar screen.
+
+They must remain compact and not turn the app into a dashboard.
