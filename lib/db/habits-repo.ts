@@ -12,3 +12,7 @@ export async function getHabitById(habitId: string): Promise<Habit | undefined> 
 export async function createHabitRecord(habit: Habit): Promise<void> {
   await db.habits.put(habit);
 }
+
+export async function deleteHabitRecord(habitId: string): Promise<void> {
+  await db.habits.delete(habitId);
+}

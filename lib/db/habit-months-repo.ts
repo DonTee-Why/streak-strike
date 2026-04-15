@@ -15,6 +15,10 @@ export async function listHabitMonths(habitId: string): Promise<HabitMonth[]> {
   return db.habitMonths.where("habitId").equals(habitId).toArray();
 }
 
+export async function deleteHabitMonths(habitId: string): Promise<number> {
+  return db.habitMonths.where("habitId").equals(habitId).delete();
+}
+
 export async function getOrCreateHabitMonth(habitId: string, year: number, month: number): Promise<HabitMonth> {
   const found = await getHabitMonth(habitId, year, month);
   if (found) {

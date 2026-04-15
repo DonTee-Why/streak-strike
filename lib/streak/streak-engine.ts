@@ -1,4 +1,4 @@
-import { addDays, daysInMonth, getYmd } from "@/lib/date/local-date";
+import { addDays, daysInMonth, diffCalendarDays, getYmd } from "@/lib/date/local-date";
 import type { HabitMonth } from "@/types/habit";
 
 export type MonthLoader = (year: number, month: number) => Promise<HabitMonth | undefined>;
@@ -45,7 +45,40 @@ function monthKey(year: number, month: number): number {
 }
 
 export function calculateTotalCompletions(monthRecords: HabitMonth[]): number {
-  return monthRecords.reduce((sum, record) => sum + record.completedCount, 0);
+  return monthRecords.reduce((sum, record) => {
+    const monthDays = daysInMonth(record.year, record.month);
+    let completed = 0;
+    for (let day = 1; day <= monthDays; day += 1) {
+      if (record.bits[day - 1] === "1") {
+        completed += 1;
+      }
+    }
+    return sum + completed;
+  }, 0);
+}
+
+export function calculateTotalCompletionsInRange(
+  monthRecords: HabitMonth[],
+  startDate: string,
+  endDate: string,
+): number {
+  return monthRecords.reduce((sum, record) => {
+    const monthDays = daysInMonth(record.year, record.month);
+    let completed = 0;
+
+    for (let day = 1; day <= monthDays; day += 1) {
+      const date = `${record.year}-${String(record.month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      if (date < startDate || date > endDate) {
+        continue;
+      }
+
+      if (record.bits[day - 1] === "1") {
+        completed += 1;
+      }
+    }
+
+    return sum + completed;
+  }, 0);
 }
 
 export function calculateLongestStreak(monthRecords: HabitMonth[]): number {
@@ -73,4 +106,22 @@ export function calculateLongestStreak(monthRecords: HabitMonth[]): number {
   }
 
   return longest;
+}
+
+export function getDaysSinceStart(startDate: string, today: string): number {
+  const diff = diffCalendarDays(startDate, today);
+  if (diff < 0) {
+    throw new Error("Start date cannot be in the future");
+  }
+
+  return diff + 1;
+}
+
+export function getCompletionRate(totalCompletions: number, daysSinceStart: number): number {
+  if (daysSinceStart < 1) {
+    throw new Error("Days since start must be at least 1");
+  }
+
+  const rawRate = totalCompletions / daysSinceStart;
+  return Math.min(1, Math.max(0, rawRate));
 }

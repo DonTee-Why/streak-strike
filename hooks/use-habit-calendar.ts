@@ -12,14 +12,13 @@ export function useHabitCalendar() {
       calendarDays: state.calendarDays,
       viewedYear: state.viewedYear,
       viewedMonth: state.viewedMonth,
-      currentStreak: state.currentStreak,
-      longestStreak: state.longestStreak,
-      totalCompletions: state.totalCompletions,
+      metrics: state.metrics,
       isLoading: state.isLoading,
       error: state.error,
       loadHabitCalendar: state.loadHabitCalendar,
       moveMonth: state.moveMonth,
       toggleDate: state.toggleDate,
+      deleteHabit: state.deleteHabit,
     })),
   );
 }

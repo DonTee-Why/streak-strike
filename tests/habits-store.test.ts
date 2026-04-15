@@ -4,9 +4,11 @@ import type { Habit } from "@/types/habit";
 const currentToday = vi.hoisted(() => ({ value: "2026-03-09" }));
 const serviceMocks = vi.hoisted(() => ({
   createHabit: vi.fn(),
+  deleteHabit: vi.fn(),
   getHabit: vi.fn(),
   getHabitCalendarMonth: vi.fn(),
   getHabits: vi.fn(),
+  getHabitMetrics: vi.fn(),
   getHabitStreaks: vi.fn(),
   markGraceDayOnce: vi.fn(),
   toggleToday: vi.fn(),
@@ -23,9 +25,11 @@ vi.mock("@/lib/date/local-date", async () => {
 vi.mock("@/lib/db/habit-service", () => ({
   HabitRuleError: class HabitRuleError extends Error {},
   createHabit: serviceMocks.createHabit,
+  deleteHabit: serviceMocks.deleteHabit,
   getHabit: serviceMocks.getHabit,
   getHabitCalendarMonth: serviceMocks.getHabitCalendarMonth,
   getHabits: serviceMocks.getHabits,
+  getHabitMetrics: serviceMocks.getHabitMetrics,
   getHabitStreaks: serviceMocks.getHabitStreaks,
   markGraceDayOnce: serviceMocks.markGraceDayOnce,
   toggleToday: serviceMocks.toggleToday,
@@ -38,6 +42,14 @@ async function loadStore() {
 }
 
 const streaks = { currentStreak: 2, longestStreak: 5, totalCompletions: 8 };
+const metrics = {
+  startDate: "2026-03-01",
+  daysSinceStart: 9,
+  totalCompletions: 8,
+  completionRate: 8 / 9,
+  currentStreak: 2,
+  longestStreak: 5,
+};
 const habit: Habit = {
   id: "habit_1",
   name: "Read",
@@ -51,8 +63,10 @@ describe("habits store day sync", () => {
     currentToday.value = "2026-03-09";
     vi.clearAllMocks();
     serviceMocks.createHabit.mockResolvedValue(habit);
+    serviceMocks.deleteHabit.mockResolvedValue(undefined);
     serviceMocks.getHabit.mockResolvedValue(habit);
     serviceMocks.getHabits.mockResolvedValue([habit]);
+    serviceMocks.getHabitMetrics.mockResolvedValue(metrics);
     serviceMocks.getHabitStreaks.mockResolvedValue(streaks);
     serviceMocks.getHabitCalendarMonth.mockResolvedValue([]);
     serviceMocks.markGraceDayOnce.mockResolvedValue(undefined);
@@ -107,5 +121,6 @@ describe("habits store day sync", () => {
 
     expect(serviceMocks.getHabit).toHaveBeenCalledWith("habit_1");
     expect(useHabitsStore.getState().currentHabit).toEqual(habit);
+    expect(useHabitsStore.getState().metrics).toEqual(metrics);
   });
 });

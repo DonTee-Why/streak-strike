@@ -3,9 +3,11 @@
 import { create } from "zustand";
 import {
   createHabit,
+  deleteHabit as deleteHabitRecord,
   getHabit,
   getHabitCalendarMonth,
   getHabits,
+  getHabitMetrics,
   getHabitStreaks,
   HabitRuleError,
   markGraceDayOnce,
@@ -13,7 +15,7 @@ import {
 } from "@/lib/db/habit-service";
 import { getLocalToday, getYmd } from "@/lib/date/local-date";
 import type { MonthGridDay } from "@/lib/calendar/month-grid";
-import type { Habit } from "@/types/habit";
+import type { Habit, HabitMetrics } from "@/types/habit";
 
 interface HabitListItem {
   habit: Habit;
@@ -28,9 +30,7 @@ interface HabitsStoreState {
   calendarDays: MonthGridDay[];
   viewedYear: number;
   viewedMonth: number;
-  currentStreak: number;
-  longestStreak: number;
-  totalCompletions: number;
+  metrics?: HabitMetrics;
   isLoading: boolean;
   error?: string;
   syncToday: () => Promise<string>;
@@ -41,6 +41,7 @@ interface HabitsStoreState {
   loadHabitCalendar: (habitId: string, year?: number, month?: number) => Promise<void>;
   moveMonth: (habitId: string, delta: number) => Promise<void>;
   toggleDate: (habitId: string, targetDate: string) => Promise<void>;
+  deleteHabit: (habitId: string) => Promise<void>;
 }
 
 export const useHabitsStore = create<HabitsStoreState>((set, get) => {
@@ -71,17 +72,15 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
 
     set({ isLoading: true, error: undefined, currentHabitId: habitId, viewedYear: targetYear, viewedMonth: targetMonth });
     try {
-      const [habit, calendarDays, streaks] = await Promise.all([
+      const [habit, calendarDays, metrics] = await Promise.all([
         getHabit(habitId),
         getHabitCalendarMonth({ habitId, year: targetYear, month: targetMonth, today }),
-        getHabitStreaks(habitId, today),
+        getHabitMetrics(habitId, today),
       ]);
       set({
         currentHabit: habit,
         calendarDays,
-        currentStreak: streaks.currentStreak,
-        longestStreak: streaks.longestStreak,
-        totalCompletions: streaks.totalCompletions,
+        metrics,
         isLoading: false,
       });
     } catch (error) {
@@ -104,9 +103,7 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
     calendarDays: [],
     viewedYear: initialTodayYmd.year,
     viewedMonth: initialTodayYmd.month,
-    currentStreak: 0,
-    longestStreak: 0,
-    totalCompletions: 0,
+    metrics: undefined,
     isLoading: false,
     async syncToday() {
       if (syncPromise) {
@@ -141,16 +138,16 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
       await loadHabitsForToday(today);
     },
     async addHabit(input) {
-    set({ isLoading: true, error: undefined });
-    try {
-      const habit = await createHabit(input);
-      await get().loadHabits();
-      set({ isLoading: false });
-      return habit.id;
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : "Failed to create habit", isLoading: false });
-      throw error;
-    }
+      set({ isLoading: true, error: undefined });
+      try {
+        const habit = await createHabit(input);
+        await get().loadHabits();
+        set({ isLoading: false });
+        return habit.id;
+      } catch (error) {
+        set({ error: error instanceof Error ? error.message : "Failed to create habit", isLoading: false });
+        throw error;
+      }
     },
     async loadHabitCalendar(habitId, year, month) {
       const today = await get().ensureFreshToday();
@@ -182,6 +179,28 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
           return;
         }
         set({ error: error instanceof Error ? error.message : "Failed to update day", isLoading: false });
+      }
+    },
+    async deleteHabit(habitId) {
+      set({ isLoading: true, error: undefined });
+      try {
+        await deleteHabitRecord(habitId);
+        const today = await get().ensureFreshToday();
+        await loadHabitsForToday(today);
+        set({
+          currentHabit: undefined,
+          currentHabitId: undefined,
+          calendarDays: [],
+          metrics: undefined,
+          isLoading: false,
+        });
+      } catch (error) {
+        if (error instanceof HabitRuleError) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+        set({ error: error instanceof Error ? error.message : "Failed to delete habit", isLoading: false });
+        throw error;
       }
     },
   };

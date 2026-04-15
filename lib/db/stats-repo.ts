@@ -8,3 +8,7 @@ export async function getHabitStats(habitId: string): Promise<HabitStats | undef
 export async function upsertHabitStats(stats: HabitStats): Promise<void> {
   await db.habitStats.put(stats);
 }
+
+export async function deleteHabitStats(habitId: string): Promise<number> {
+  return db.habitStats.where("habitId").equals(habitId).delete();
+}

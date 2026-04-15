@@ -22,3 +22,12 @@ export interface HabitStats {
   totalCompletions: number;
   updatedAt: string;
 }
+
+export interface HabitMetrics {
+  startDate: string;
+  daysSinceStart: number;
+  totalCompletions: number;
+  completionRate: number;
+  currentStreak: number;
+  longestStreak: number;
+}

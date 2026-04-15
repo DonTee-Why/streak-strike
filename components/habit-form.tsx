@@ -16,9 +16,10 @@ interface HabitFormProps {
 }
 
 export function HabitForm({ onSubmit, isSubmitting }: HabitFormProps) {
+  const today = getLocalToday();
   const [name, setName] = useState("");
   const [color, setColor] = useState("#D4A373");
-  const [startDate, setStartDate] = useState(getLocalToday());
+  const [startDate, setStartDate] = useState(today);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,6 +58,7 @@ export function HabitForm({ onSubmit, isSubmitting }: HabitFormProps) {
           type="date"
           required
           value={startDate}
+          max={today}
           onChange={(event) => setStartDate(event.target.value)}
           className="w-full rounded-lg border border-line bg-white px-3 py-2"
         />
