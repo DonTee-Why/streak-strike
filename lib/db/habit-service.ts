@@ -127,7 +127,7 @@ export async function markGraceDayOnce(
   }
 
   const completed = await isCompletedOnDate(habitId, targetDate);
-  const dayState = deriveDayState({ targetDate, today, isCompleted: completed });
+  const dayState = deriveDayState({ targetDate, today, isCompleted: completed, startDate: habit.startDate });
 
   if (dayState !== "grace_open") {
     throw new HabitRuleError("Only unmarked grace-window days are markable");
@@ -154,6 +154,11 @@ export async function getHabitCalendarMonth(input: {
 }): Promise<MonthGridDay[]> {
   const { habitId, year, month } = input;
   const today = input.today ?? getLocalToday();
+  const habit = await getHabitById(habitId);
+  if (!habit) {
+    throw new HabitRuleError("Habit not found");
+  }
+
   const months = await listHabitMonths(habitId);
   const monthMap = toMonthMap(months);
 
@@ -161,6 +166,7 @@ export async function getHabitCalendarMonth(input: {
     year,
     month,
     today,
+    startDate: habit.startDate,
     isCompletedForDate: (date) => {
       const { year: y, month: m, day } = getYmd(date);
       const record = monthMap.get(`${y}-${m}`);

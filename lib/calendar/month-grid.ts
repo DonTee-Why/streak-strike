@@ -19,9 +19,10 @@ export function buildMonthGrid(input: {
   year: number;
   month: number;
   today: string;
+  startDate?: string;
   isCompletedForDate: (date: string) => boolean;
 }): MonthGridDay[] {
-  const { year, month, today, isCompletedForDate } = input;
+  const { year, month, today, startDate, isCompletedForDate } = input;
   const total = daysInMonth(year, month);
   const offset = firstDayOffset(year, month);
   const firstOfMonth = formatLocalDate(new Date(year, month - 1, 1, 12));
@@ -31,14 +32,14 @@ export function buildMonthGrid(input: {
   for (let i = 0; i < offset; i += 1) {
     const date = addDays(firstOfMonth, -offset + i);
     const completed = isCompletedForDate(date);
-    const state = deriveDayState({ targetDate: date, today, isCompleted: completed });
+    const state = deriveDayState({ targetDate: date, today, isCompleted: completed, startDate });
     cells.push({ date, day: getYmd(date).day, inMonth: false, state, completed, markable: isMarkableDayState(state) });
   }
 
   for (let day = 1; day <= total; day += 1) {
     const date = formatLocalDate(new Date(year, month - 1, day, 12));
     const completed = isCompletedForDate(date);
-    const state = deriveDayState({ targetDate: date, today, isCompleted: completed });
+    const state = deriveDayState({ targetDate: date, today, isCompleted: completed, startDate });
     cells.push({ date, day, inMonth: true, state, completed, markable: isMarkableDayState(state) });
   }
 
@@ -48,7 +49,7 @@ export function buildMonthGrid(input: {
   for (let i = 1; i <= trailing; i += 1) {
     const date = addDays(lastInGrid, i);
     const completed = isCompletedForDate(date);
-    const state = deriveDayState({ targetDate: date, today, isCompleted: completed });
+    const state = deriveDayState({ targetDate: date, today, isCompleted: completed, startDate });
     cells.push({ date, day: getYmd(date).day, inMonth: false, state, completed, markable: isMarkableDayState(state) });
   }
 

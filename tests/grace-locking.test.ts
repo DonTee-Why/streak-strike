@@ -43,4 +43,19 @@ describe("grace window locking", () => {
     await toggleToday(habit.id, "2026-03-09");
     await expect(markGraceDayOnce(habit.id, "2026-03-05", "2026-03-09")).rejects.toThrow();
   });
+
+  it("prevents marking previous days when today is the habit start day", async () => {
+    const habit = await createHabit({ name: "Move", color: "#000000", startDate: "2026-03-09" });
+
+    await expect(markGraceDayOnce(habit.id, "2026-03-08", "2026-03-09")).rejects.toThrow(
+      "Only unmarked grace-window days are markable",
+    );
+
+    const days = await getHabitCalendarMonth({ habitId: habit.id, year: 2026, month: 3, today: "2026-03-09" });
+    const preStartDay = days.find((day) => day.date === "2026-03-08");
+
+    expect(preStartDay?.state).toBe("pre_start");
+    expect(preStartDay?.completed).toBe(false);
+    expect(preStartDay?.markable).toBe(false);
+  });
 });

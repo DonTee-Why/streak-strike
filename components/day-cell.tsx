@@ -9,6 +9,8 @@ interface DayCellProps {
 
 function stateClass(state: MonthGridDay["state"]): string {
   switch (state) {
+    case "pre_start":
+      return "border-[#d6d9cf] bg-[#f2f3ee] text-[#a1a79a]";
     case "today_open":
       return "border-ink bg-white text-ink";
     case "today_done":

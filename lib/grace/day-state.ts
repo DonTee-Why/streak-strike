@@ -5,9 +5,14 @@ interface DeriveDayStateInput {
   targetDate: string;
   today: string;
   isCompleted: boolean;
+  startDate?: string;
 }
 
-export function deriveDayState({ targetDate, today, isCompleted }: DeriveDayStateInput): DayState {
+export function deriveDayState({ targetDate, today, isCompleted, startDate }: DeriveDayStateInput): DayState {
+  if (startDate && targetDate < startDate) {
+    return "pre_start";
+  }
+
   const delta = diffCalendarDays(targetDate, today);
 
   if (delta < 0) {
