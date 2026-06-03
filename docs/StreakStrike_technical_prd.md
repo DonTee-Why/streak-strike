@@ -179,18 +179,22 @@ mask = mask & ~(1 << (day - 1))
 
 # 6. Grace Window Logic
 
-The system allows marking of previous days within a three day window.
+The system allows marking of previous days within a three day window, bounded by the habit's startDate.
 
 Rules:
 
 • today is editable
 • previous 1‑3 days may be marked if unmarked
+• previous days before the habit's startDate are locked and cannot be marked
 • once marked they become locked
 • days older than the grace window are locked
 
 Pseudo logic:
 
 ```
+if date < habit.startDate
+  locked
+
 if date > today
   disable
 
@@ -216,6 +220,8 @@ The UI should derive a state for each day.
 Possible states:
 
 future
+
+pre_start
 
 open_today
 

@@ -124,7 +124,7 @@ The streak is calculated from the completion history.
 
 # 6. Grace Period Rule
 
-Users may mark previous dates within a **3‑day grace window**.
+Users may mark previous dates within a **3‑day grace window**, as long as the date is not before the habit's start date.
 
 Example:
 
@@ -138,7 +138,8 @@ However, the following restrictions apply:
 
 1. Past dates can only be marked **once**.
 2. Once marked, the date becomes **permanently locked**.
-3. Past dates that were never marked become **permanently missed** after the grace window expires.
+3. Past dates before the habit's start date can never be marked.
+4. Past dates that were never marked become **permanently missed** after the grace window expires.
 
 This rule prevents users from rewriting history while allowing reasonable flexibility.
 
@@ -150,10 +151,11 @@ Each day can exist in one of the following states:
 
 1. Future day
 2. Today (editable)
-3. Grace period day (markable if unmarked)
-4. Grace period completed day (locked)
-5. Expired missed day
-6. Expired completed day
+3. Pre-start day (locked)
+4. Grace period day (markable if unmarked)
+5. Grace period completed day (locked)
+6. Expired missed day
+7. Expired completed day
 
 ---
 
@@ -176,6 +178,8 @@ Users can mark or unmark today's completion.
 ### Grace Window Days
 
 Users can mark a day **once** if it has not previously been marked.
+
+Grace window days before the habit's start date are locked and cannot be marked.
 
 Once marked, the day cannot be edited again.
 

@@ -63,9 +63,10 @@ Streaks are derived from completion history and can be cached, but cache is rebu
 ## Grace Window Rules
 
 - Today (`YYYY-MM-DD` local day) is editable: mark/unmark allowed.
-- Previous 1-3 days are grace days:
+- Previous 1-3 days on or after the habit's start date are grace days:
   - if unmarked, can be marked once
   - once marked, permanently locked
+- Dates before the habit's start date are locked and never grace-markable.
 - Older than 3 days: permanently locked.
 
 ## Streak Rules

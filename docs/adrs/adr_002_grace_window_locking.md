@@ -16,7 +16,9 @@ Therefore the system must allow limited backfilling while preserving discipline 
 
 The system will implement a **3-day grace window with write-once locking**.
 
-Users may mark completion for the previous three days if those days were not previously marked.
+Users may mark completion for the previous three days if those days were not previously marked and are not before the habit's start date.
+
+The grace window only applies on or after the habit's start date. Previous days before the habit's start date are permanently locked and cannot be marked.
 
 Once a past day is marked, it becomes permanently locked and cannot be edited again.
 
@@ -34,11 +36,16 @@ Days older than the grace window are permanently locked.
 
 If unmarked:
 
-• May be marked once
+• May be marked once, unless before the habit's start date
 
 If marked:
 
 • Permanently locked
+
+### Before Habit Start Date
+
+• Permanently locked
+• Cannot be edited, even inside the grace window
 
 ### Older Days
 

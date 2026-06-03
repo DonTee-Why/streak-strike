@@ -66,6 +66,7 @@ difference = daysBetween(targetDate, today)
 Rules:
 
 ```
+targetDate < habit.startDate → locked
 difference = 0 → today
 difference = 1–3 → grace window
 difference > 3 → locked
