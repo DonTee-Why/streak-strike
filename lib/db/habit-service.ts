@@ -5,6 +5,7 @@ import { createHabitRecord, deleteHabitRecord, getHabitById, listHabits } from "
 import { deleteHabitStats, upsertHabitStats } from "@/lib/db/stats-repo";
 import { getLocalToday, getYmd } from "@/lib/date/local-date";
 import { deriveDayState } from "@/lib/grace/day-state";
+import { getHabitInsights as deriveHabitInsights } from "@/lib/insights/insights-engine";
 import {
   calculateCurrentStreak,
   calculateLongestStreak,
@@ -13,7 +14,7 @@ import {
   getCompletionRate,
   getDaysSinceStart,
 } from "@/lib/streak/streak-engine";
-import type { Habit, HabitMetrics, HabitMonth } from "@/types/habit";
+import type { Habit, HabitInsights, HabitMetrics, HabitMonth } from "@/types/habit";
 
 export class HabitRuleError extends Error {}
 
@@ -229,4 +230,14 @@ export async function getHabitMetrics(habitId: string, today = getLocalToday()):
     currentStreak: streaks.currentStreak,
     longestStreak: streaks.longestStreak,
   };
+}
+
+export async function getHabitInsights(habitId: string, today = getLocalToday()): Promise<HabitInsights> {
+  const habit = await getHabitById(habitId);
+  if (!habit) {
+    throw new HabitRuleError("Habit not found");
+  }
+
+  const months = await listHabitMonths(habitId);
+  return deriveHabitInsights(months, habit.startDate, today);
 }

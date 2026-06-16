@@ -6,6 +6,7 @@ import {
   deleteHabit as deleteHabitRecord,
   getHabit,
   getHabitCalendarMonth,
+  getHabitInsights,
   getHabits,
   getHabitMetrics,
   getHabitStreaks,
@@ -15,7 +16,7 @@ import {
 } from "@/lib/db/habit-service";
 import { getLocalToday, getYmd } from "@/lib/date/local-date";
 import type { MonthGridDay } from "@/lib/calendar/month-grid";
-import type { Habit, HabitMetrics } from "@/types/habit";
+import type { Habit, HabitInsights, HabitMetrics } from "@/types/habit";
 
 interface HabitListItem {
   habit: Habit;
@@ -31,6 +32,7 @@ interface HabitsStoreState {
   viewedYear: number;
   viewedMonth: number;
   metrics?: HabitMetrics;
+  insights?: HabitInsights;
   isLoading: boolean;
   error?: string;
   syncToday: () => Promise<string>;
@@ -72,15 +74,17 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
 
     set({ isLoading: true, error: undefined, currentHabitId: habitId, viewedYear: targetYear, viewedMonth: targetMonth });
     try {
-      const [habit, calendarDays, metrics] = await Promise.all([
+      const [habit, calendarDays, metrics, insights] = await Promise.all([
         getHabit(habitId),
         getHabitCalendarMonth({ habitId, year: targetYear, month: targetMonth, today }),
         getHabitMetrics(habitId, today),
+        getHabitInsights(habitId, today),
       ]);
       set({
         currentHabit: habit,
         calendarDays,
         metrics,
+        insights,
         isLoading: false,
       });
     } catch (error) {
@@ -104,6 +108,7 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
     viewedYear: initialTodayYmd.year,
     viewedMonth: initialTodayYmd.month,
     metrics: undefined,
+    insights: undefined,
     isLoading: false,
     async syncToday() {
       if (syncPromise) {
@@ -192,6 +197,7 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
           currentHabitId: undefined,
           calendarDays: [],
           metrics: undefined,
+          insights: undefined,
           isLoading: false,
         });
       } catch (error) {

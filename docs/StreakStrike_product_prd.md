@@ -294,3 +294,132 @@ totalCompletions / daysSinceStart
 Metrics should be displayed on the Habit Calendar screen.
 
 They must remain compact and not turn the app into a dashboard.
+
+# 14. Insights
+
+The Insights section provides users with visibility into their discipline patterns without turning StreakStrike into a productivity dashboard.
+
+Insights are derived entirely from completion history and do not introduce additional user input requirements.
+
+Insights are accessed through a dedicated "Insights" tab within a habit.
+
+Example:
+
+[ Calendar ] [ Insights ]
+
+The Calendar tab remains focused on habit tracking.
+
+The Insights tab focuses on behavioral understanding.
+
+---
+
+## 14.1 Overview
+
+The Overview section displays:
+
+• Start Date
+• Days Since Start
+• Total Completions
+• Completion Rate
+• Current Streak
+• Longest Streak
+
+---
+
+## 14.2 Weekly Performance
+
+The system displays:
+
+• This Week
+• Previous Week
+
+For each period:
+
+• Completed Days
+• Eligible Days
+• Completion Rate
+
+The system also displays a trend indicator:
+
+• Improving
+• Stable
+• Declining
+
+---
+
+## 14.3 Monthly Performance
+
+The system displays:
+
+• This Month
+• Previous Month
+
+For each period:
+
+• Completed Days
+• Eligible Days
+• Completion Rate
+
+The system also displays a trend indicator.
+
+---
+
+## 14.4 Weekday Patterns
+
+The system displays performance by weekday.
+
+Example:
+
+Monday
+Tuesday
+Wednesday
+Thursday
+Friday
+Saturday
+Sunday
+
+For each weekday:
+
+• Completion Count
+• Completion Rate
+
+---
+
+## 14.5 Best and Weakest Days
+
+The system displays:
+
+• Best Day
+• Weakest Day
+
+Determined by completion rate.
+
+---
+
+## 14.6 Records
+
+The system displays:
+
+• Best Week
+• Best Month
+• Longest Streak
+
+These represent the user's historical personal records.
+
+---
+
+## 14.7 Help
+
+The Grace Period Rules panel is replaced with a help entry.
+
+Example:
+
+ⓘ How StreakStrike Works
+
+The help entry opens a modal containing:
+
+• Grace Window Rules
+• Day States
+• Streak Rules
+
+---

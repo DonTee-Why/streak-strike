@@ -13,6 +13,7 @@ export function useHabitCalendar() {
       viewedYear: state.viewedYear,
       viewedMonth: state.viewedMonth,
       metrics: state.metrics,
+      insights: state.insights,
       isLoading: state.isLoading,
       error: state.error,
       loadHabitCalendar: state.loadHabitCalendar,

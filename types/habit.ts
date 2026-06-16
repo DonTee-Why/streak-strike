@@ -31,3 +31,39 @@ export interface HabitMetrics {
   currentStreak: number;
   longestStreak: number;
 }
+
+export type TrendDirection = "improving" | "declining" | "stable";
+
+export interface PeriodStats {
+  startDate: string;
+  endDate: string;
+  completedDays: number;
+  eligibleDays: number;
+  completionRate: number;
+}
+
+export interface WeekdayStats {
+  weekday: number;
+  label: string;
+  completionCount: number;
+  eligibleCount: number;
+  completionRate: number;
+}
+
+export interface PeriodRecord extends PeriodStats {
+  label: string;
+}
+
+export interface HabitInsights {
+  currentWeek: PeriodStats;
+  previousWeek: PeriodStats;
+  weeklyTrend: TrendDirection;
+  currentMonth: PeriodStats;
+  previousMonth: PeriodStats;
+  monthlyTrend: TrendDirection;
+  weekdayStats: WeekdayStats[];
+  bestDay?: WeekdayStats;
+  weakestDay?: WeekdayStats;
+  bestWeek?: PeriodRecord;
+  bestMonth?: PeriodRecord;
+}

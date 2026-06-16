@@ -411,3 +411,90 @@ These must operate on bitsets.
 • startDate must not be in the future  
 • completionRate must be clamped between 0 and 1  
 • daysSinceStart must be ≥ 1
+
+# 16. Insights Engine
+
+Insights are derived data.
+
+No additional persistence tables are introduced.
+
+Monthly bitsets remain the sole source of truth.
+
+This follows ADR-001 and ADR-003.  
+
+---
+
+## 16.1 Weekly Stats
+
+interface WeeklyStats {
+  completedDays: number
+  eligibleDays: number
+  completionRate: number
+}
+
+Week definition:
+
+Monday → Sunday
+
+Current Week:
+week containing today
+
+Previous Week:
+week immediately preceding current week
+
+---
+
+## 16.2 Monthly Stats
+
+interface MonthlyStats {
+  completedDays: number
+  eligibleDays: number
+  completionRate: number
+}
+
+Current Month:
+month containing today
+
+Previous Month:
+month immediately preceding current month
+
+---
+
+## 16.3 Weekday Pattern Analysis
+
+interface WeekdayStats {
+  weekday: number
+  completionCount: number
+  eligibleCount: number
+  completionRate: number
+}
+
+Computed across all available completion history.
+
+---
+
+## 16.4 Records
+
+interface HabitRecords {
+  bestWeek: WeeklyRecord
+  bestMonth: MonthlyRecord
+  longestStreak: number
+}
+
+---
+
+## 16.5 Trend Analysis
+
+enum TrendDirection {
+  Improving,
+  Stable,
+  Declining
+}
+
+Derived by comparing:
+
+Current Week vs Previous Week
+
+Current Month vs Previous Month
+
+---
