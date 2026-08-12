@@ -1,6 +1,25 @@
 "use client";
 
-const COLORS = ["#D4A373", "#6C8B4D", "#4D7A9B", "#B56576", "#8C6A5D", "#3A5A40"];
+const COLORS = [
+  "#D4A373",
+  "#C97A40",
+  "#B56576",
+  "#9D4EDD",
+  "#6C8B4D",
+  "#2A9D8F",
+  "#4D7A9B",
+  "#577590",
+  "#8C6A5D",
+  "#3A5A40",
+  "#E9C46A",
+  "#F4A261",
+  "#E76F51",
+  "#C44536",
+  "#355070",
+  "#6D597A",
+  "#118AB2",
+  "#073B4C",
+];
 
 interface ColorPickerProps {
   value: string;
