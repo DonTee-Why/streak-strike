@@ -27,6 +27,24 @@ describe("day state derivation", () => {
   it("classifies grace states", () => {
     expect(deriveDayState({ targetDate: "2026-03-08", today, isCompleted: false })).toBe("grace_open");
     expect(deriveDayState({ targetDate: "2026-03-07", today, isCompleted: true })).toBe("grace_done_locked");
+    expect(
+      deriveDayState({
+        targetDate: "2026-03-07",
+        today,
+        isCompleted: true,
+        wasGraceMarked: true,
+        wasGraceCorrectionUsed: false,
+      }),
+    ).toBe("grace_done_editable");
+    expect(
+      deriveDayState({
+        targetDate: "2026-03-07",
+        today,
+        isCompleted: true,
+        wasGraceMarked: true,
+        wasGraceCorrectionUsed: true,
+      }),
+    ).toBe("grace_done_locked");
   });
 
   it("keeps grace days markable after the habit has started", () => {

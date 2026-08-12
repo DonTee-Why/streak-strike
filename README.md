@@ -57,6 +57,7 @@ Canonical completion history uses monthly bitsets (`HabitMonth`):
 - `bit 0 => day 1` ... `bit 30 => day 31`
 - `1 = completed`, `0 = not completed`
 - one month record per `habitId + year + month`
+- grace edit history uses monthly bitsets alongside completion bits
 
 Streaks are derived from completion history and can be cached, but cache is rebuildable.
 
@@ -64,8 +65,10 @@ Streaks are derived from completion history and can be cached, but cache is rebu
 
 - Today (`YYYY-MM-DD` local day) is editable: mark/unmark allowed.
 - Previous 1-3 days on or after the habit's start date are grace days:
-  - if unmarked, can be marked once
-  - once marked, permanently locked
+  - if unmarked and untouched, can be marked once
+  - if marked during grace, can be unmarked once
+  - after that correction, it can be marked once more
+  - once marked after the correction is used, it is permanently locked
 - Dates before the habit's start date are locked and never grace-markable.
 - Older than 3 days: permanently locked.
 

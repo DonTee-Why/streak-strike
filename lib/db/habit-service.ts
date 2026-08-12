@@ -35,6 +35,22 @@ async function isCompletedOnDate(habitId: string, date: string): Promise<boolean
   return monthRecord.bits[day - 1] === "1";
 }
 
+async function getGraceHistoryOnDate(
+  habitId: string,
+  date: string,
+): Promise<{ wasGraceMarked: boolean; wasGraceCorrectionUsed: boolean }> {
+  const { year, month, day } = getYmd(date);
+  const monthRecord = await getHabitMonth(habitId, year, month);
+  if (!monthRecord) {
+    return { wasGraceMarked: false, wasGraceCorrectionUsed: false };
+  }
+
+  return {
+    wasGraceMarked: monthRecord.graceMarkedBits[day - 1] === "1",
+    wasGraceCorrectionUsed: monthRecord.graceCorrectionBits[day - 1] === "1",
+  };
+}
+
 async function refreshStats(habitId: string, today = getLocalToday()): Promise<void> {
   const months = await listHabitMonths(habitId);
   const habit = await getHabitById(habitId);
@@ -117,7 +133,7 @@ export async function toggleToday(habitId: string, today = getLocalToday()): Pro
   await refreshStats(habitId, today);
 }
 
-export async function markGraceDayOnce(
+export async function toggleGraceDayOnce(
   habitId: string,
   targetDate: string,
   today = getLocalToday(),
@@ -128,15 +144,38 @@ export async function markGraceDayOnce(
   }
 
   const completed = await isCompletedOnDate(habitId, targetDate);
-  const dayState = deriveDayState({ targetDate, today, isCompleted: completed, startDate: habit.startDate });
-
-  if (dayState !== "grace_open") {
-    throw new HabitRuleError("Only unmarked grace-window days are markable");
-  }
+  const graceHistory = await getGraceHistoryOnDate(habitId, targetDate);
+  const dayState = deriveDayState({
+    targetDate,
+    today,
+    isCompleted: completed,
+    ...graceHistory,
+    startDate: habit.startDate,
+  });
 
   const { year, month, day } = getYmd(targetDate);
-  await markHabitDay(habitId, year, month, day);
-  await refreshStats(habitId, today);
+
+  if (dayState === "grace_open") {
+    await markHabitDay(habitId, year, month, day, { markGrace: true });
+    await refreshStats(habitId, today);
+    return;
+  }
+
+  if (dayState === "grace_done_editable") {
+    await unmarkHabitDay(habitId, year, month, day, { markGraceCorrection: true });
+    await refreshStats(habitId, today);
+    return;
+  }
+
+  throw new HabitRuleError("Only editable grace-window days can be changed");
+}
+
+export async function markGraceDayOnce(
+  habitId: string,
+  targetDate: string,
+  today = getLocalToday(),
+): Promise<void> {
+  await toggleGraceDayOnce(habitId, targetDate, today);
 }
 
 function toMonthMap(months: HabitMonth[]): Map<string, HabitMonth> {
@@ -175,6 +214,22 @@ export async function getHabitCalendarMonth(input: {
         return false;
       }
       return record.bits[day - 1] === "1";
+    },
+    wasGraceMarkedForDate: (date) => {
+      const { year: y, month: m, day } = getYmd(date);
+      const record = monthMap.get(`${y}-${m}`);
+      if (!record) {
+        return false;
+      }
+      return record.graceMarkedBits[day - 1] === "1";
+    },
+    wasGraceCorrectionUsedForDate: (date) => {
+      const { year: y, month: m, day } = getYmd(date);
+      const record = monthMap.get(`${y}-${m}`);
+      if (!record) {
+        return false;
+      }
+      return record.graceCorrectionBits[day - 1] === "1";
     },
   });
 }

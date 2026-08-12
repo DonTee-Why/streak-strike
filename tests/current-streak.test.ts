@@ -1,10 +1,20 @@
 import { describe, expect, it } from "vitest";
+import { createEmptyMonthBits } from "@/lib/bitset/month-bitset";
 import { calculateCurrentStreak } from "@/lib/streak/streak-engine";
 import type { HabitMonth } from "@/types/habit";
 
 function makeMonth(habitId: string, year: number, month: number, doneDays: number[]): HabitMonth {
   const bits = Array.from({ length: 31 }, (_, i) => (doneDays.includes(i + 1) ? "1" : "0")).join("");
-  return { habitId, year, month, bits, completedCount: doneDays.length, updatedAt: "2026-03-09" };
+  return {
+    habitId,
+    year,
+    month,
+    bits,
+    graceMarkedBits: createEmptyMonthBits(),
+    graceCorrectionBits: createEmptyMonthBits(),
+    completedCount: doneDays.length,
+    updatedAt: "2026-03-09",
+  };
 }
 
 describe("current streak", () => {

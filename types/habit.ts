@@ -11,6 +11,8 @@ export interface HabitMonth {
   year: number;
   month: number;
   bits: string;
+  graceMarkedBits: string;
+  graceCorrectionBits: string;
   completedCount: number;
   updatedAt: string;
 }

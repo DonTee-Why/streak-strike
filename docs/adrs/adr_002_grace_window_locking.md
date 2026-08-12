@@ -1,4 +1,4 @@
-# ADR-002: Grace Window Locking Model
+# ADR-002: Grace Window Correction Locking Model
 
 ## Status
 
@@ -14,13 +14,13 @@ Therefore the system must allow limited backfilling while preserving discipline 
 
 ## Decision
 
-The system will implement a **3-day grace window with write-once locking**.
+The system will implement a **3-day grace window with one correction cycle**.
 
-Users may mark completion for the previous three days if those days were not previously marked and are not before the habit's start date.
+Users may mark completion for the previous three days if those days are not before the habit's start date.
 
 The grace window only applies on or after the habit's start date. Previous days before the habit's start date are permanently locked and cannot be marked.
 
-Once a past day is marked, it becomes permanently locked and cannot be edited again.
+When a past day is marked during grace, it may be unmarked once while it remains inside the grace window. After that correction is used, it may be marked once more. Once marked after the correction is used, it becomes permanently locked and cannot be edited again.
 
 Days older than the grace window are permanently locked.
 
@@ -36,9 +36,13 @@ Days older than the grace window are permanently locked.
 
 If unmarked:
 
-• May be marked once, unless before the habit's start date
+• May be marked, unless before the habit's start date
 
-If marked:
+If marked during grace and the correction is unused:
+
+• May be unmarked once
+
+If marked after the correction is used:
 
 • Permanently locked
 
@@ -66,9 +70,13 @@ Sunday
 
 User actions:
 
-Mark Friday → Friday becomes permanently locked
+Mark Friday → Friday can be corrected once
 
-Mark Saturday → Saturday becomes permanently locked
+Unmark Friday → Friday can be marked once more
+
+Mark Friday again → Friday becomes permanently locked
+
+Mark Saturday → Saturday can be corrected once
 
 Sunday remains markable until grace window expires
 
@@ -96,4 +104,4 @@ Rejected because it punishes users who forget to log a completion on the same da
 
 ## Decision Outcome
 
-The write-once grace window provides a balanced approach between usability and discipline enforcement.
+The one-correction grace window provides a balanced approach between realistic mistake correction and discipline enforcement.

@@ -17,6 +17,8 @@ function stateClass(state: MonthGridDay["state"]): string {
       return "border-[#2f6f4f] bg-[#dcefdc] text-ink";
     case "grace_open":
       return "border-[#b66a1a] bg-[#fff1de] text-[#5e3a10]";
+    case "grace_done_editable":
+      return "border-[#b66a1a] bg-[#dcefdc] text-ink";
     case "grace_done_locked":
       return "border-[#4b7f60] bg-[#d7ead9] text-ink";
     case "expired_done":

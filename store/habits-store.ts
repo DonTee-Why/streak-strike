@@ -11,7 +11,7 @@ import {
   getHabitMetrics,
   getHabitStreaks,
   HabitRuleError,
-  markGraceDayOnce,
+  toggleGraceDayOnce,
   toggleToday,
 } from "@/lib/db/habit-service";
 import { getLocalToday, getYmd } from "@/lib/date/local-date";
@@ -170,7 +170,7 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
         if (targetDate === today) {
           await toggleToday(habitId, today);
         } else {
-          await markGraceDayOnce(habitId, targetDate, today);
+          await toggleGraceDayOnce(habitId, targetDate, today);
         }
 
         await Promise.all([

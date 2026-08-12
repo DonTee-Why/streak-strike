@@ -21,6 +21,8 @@ export function buildMonthGrid(input: {
   today: string;
   startDate?: string;
   isCompletedForDate: (date: string) => boolean;
+  wasGraceMarkedForDate?: (date: string) => boolean;
+  wasGraceCorrectionUsedForDate?: (date: string) => boolean;
 }): MonthGridDay[] {
   const { year, month, today, startDate, isCompletedForDate } = input;
   const total = daysInMonth(year, month);
@@ -32,14 +34,28 @@ export function buildMonthGrid(input: {
   for (let i = 0; i < offset; i += 1) {
     const date = addDays(firstOfMonth, -offset + i);
     const completed = isCompletedForDate(date);
-    const state = deriveDayState({ targetDate: date, today, isCompleted: completed, startDate });
+    const state = deriveDayState({
+      targetDate: date,
+      today,
+      isCompleted: completed,
+      wasGraceMarked: input.wasGraceMarkedForDate?.(date) ?? false,
+      wasGraceCorrectionUsed: input.wasGraceCorrectionUsedForDate?.(date) ?? false,
+      startDate,
+    });
     cells.push({ date, day: getYmd(date).day, inMonth: false, state, completed, markable: isMarkableDayState(state) });
   }
 
   for (let day = 1; day <= total; day += 1) {
     const date = formatLocalDate(new Date(year, month - 1, day, 12));
     const completed = isCompletedForDate(date);
-    const state = deriveDayState({ targetDate: date, today, isCompleted: completed, startDate });
+    const state = deriveDayState({
+      targetDate: date,
+      today,
+      isCompleted: completed,
+      wasGraceMarked: input.wasGraceMarkedForDate?.(date) ?? false,
+      wasGraceCorrectionUsed: input.wasGraceCorrectionUsedForDate?.(date) ?? false,
+      startDate,
+    });
     cells.push({ date, day, inMonth: true, state, completed, markable: isMarkableDayState(state) });
   }
 
@@ -49,7 +65,14 @@ export function buildMonthGrid(input: {
   for (let i = 1; i <= trailing; i += 1) {
     const date = addDays(lastInGrid, i);
     const completed = isCompletedForDate(date);
-    const state = deriveDayState({ targetDate: date, today, isCompleted: completed, startDate });
+    const state = deriveDayState({
+      targetDate: date,
+      today,
+      isCompleted: completed,
+      wasGraceMarked: input.wasGraceMarkedForDate?.(date) ?? false,
+      wasGraceCorrectionUsed: input.wasGraceCorrectionUsedForDate?.(date) ?? false,
+      startDate,
+    });
     cells.push({ date, day: getYmd(date).day, inMonth: false, state, completed, markable: isMarkableDayState(state) });
   }
 

@@ -23,17 +23,36 @@ beforeEach(async () => {
 });
 
 describe("grace window locking", () => {
-  it("allows mark-once for grace day and then locks it", async () => {
+  it("allows one correction cycle for a grace day and then locks it", async () => {
     const habit = await createHabit({ name: "Read", color: "#000000", startDate: "2026-03-01" });
 
     await markGraceDayOnce(habit.id, "2026-03-08", "2026-03-09");
-    await expect(markGraceDayOnce(habit.id, "2026-03-08", "2026-03-09")).rejects.toThrow();
+    let days = await getHabitCalendarMonth({ habitId: habit.id, year: 2026, month: 3, today: "2026-03-09" });
+    let graceDay = days.find((day) => day.date === "2026-03-08");
 
-    const days = await getHabitCalendarMonth({ habitId: habit.id, year: 2026, month: 3, today: "2026-03-09" });
-    const graceDay = days.find((day) => day.date === "2026-03-08");
+    expect(graceDay?.state).toBe("grace_done_editable");
+    expect(graceDay?.completed).toBe(true);
+    expect(graceDay?.markable).toBe(true);
+
+    await markGraceDayOnce(habit.id, "2026-03-08", "2026-03-09");
+    days = await getHabitCalendarMonth({ habitId: habit.id, year: 2026, month: 3, today: "2026-03-09" });
+    graceDay = days.find((day) => day.date === "2026-03-08");
+
+    expect(graceDay?.state).toBe("grace_open");
+    expect(graceDay?.completed).toBe(false);
+    expect(graceDay?.markable).toBe(true);
+
+    await markGraceDayOnce(habit.id, "2026-03-08", "2026-03-09");
+    await expect(markGraceDayOnce(habit.id, "2026-03-08", "2026-03-09")).rejects.toThrow(
+      "Only editable grace-window days can be changed",
+    );
+
+    days = await getHabitCalendarMonth({ habitId: habit.id, year: 2026, month: 3, today: "2026-03-09" });
+    graceDay = days.find((day) => day.date === "2026-03-08");
 
     expect(graceDay?.state).toBe("grace_done_locked");
     expect(graceDay?.completed).toBe(true);
+    expect(graceDay?.markable).toBe(false);
   });
 
   it("keeps today editable while expired day is locked", async () => {
@@ -48,7 +67,7 @@ describe("grace window locking", () => {
     const habit = await createHabit({ name: "Move", color: "#000000", startDate: "2026-03-09" });
 
     await expect(markGraceDayOnce(habit.id, "2026-03-08", "2026-03-09")).rejects.toThrow(
-      "Only unmarked grace-window days are markable",
+      "Only editable grace-window days can be changed",
     );
 
     const days = await getHabitCalendarMonth({ habitId: habit.id, year: 2026, month: 3, today: "2026-03-09" });

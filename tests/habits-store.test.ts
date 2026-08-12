@@ -11,7 +11,7 @@ const serviceMocks = vi.hoisted(() => ({
   getHabits: vi.fn(),
   getHabitMetrics: vi.fn(),
   getHabitStreaks: vi.fn(),
-  markGraceDayOnce: vi.fn(),
+  toggleGraceDayOnce: vi.fn(),
   toggleToday: vi.fn(),
 }));
 
@@ -33,7 +33,7 @@ vi.mock("@/lib/db/habit-service", () => ({
   getHabits: serviceMocks.getHabits,
   getHabitMetrics: serviceMocks.getHabitMetrics,
   getHabitStreaks: serviceMocks.getHabitStreaks,
-  markGraceDayOnce: serviceMocks.markGraceDayOnce,
+  toggleGraceDayOnce: serviceMocks.toggleGraceDayOnce,
   toggleToday: serviceMocks.toggleToday,
 }));
 
@@ -81,7 +81,7 @@ describe("habits store day sync", () => {
     serviceMocks.getHabitMetrics.mockResolvedValue(metrics);
     serviceMocks.getHabitStreaks.mockResolvedValue(streaks);
     serviceMocks.getHabitCalendarMonth.mockResolvedValue([]);
-    serviceMocks.markGraceDayOnce.mockResolvedValue(undefined);
+    serviceMocks.toggleGraceDayOnce.mockResolvedValue(undefined);
     serviceMocks.toggleToday.mockResolvedValue(undefined);
   });
 
@@ -98,7 +98,7 @@ describe("habits store day sync", () => {
     await useHabitsStore.getState().toggleDate("habit_1", "2026-03-09");
 
     expect(serviceMocks.toggleToday).not.toHaveBeenCalled();
-    expect(serviceMocks.markGraceDayOnce).toHaveBeenCalledWith("habit_1", "2026-03-09", "2026-03-10");
+    expect(serviceMocks.toggleGraceDayOnce).toHaveBeenCalledWith("habit_1", "2026-03-09", "2026-03-10");
     expect(useHabitsStore.getState().today).toBe("2026-03-10");
   });
 

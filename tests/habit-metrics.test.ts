@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import "fake-indexeddb/auto";
+import { createEmptyMonthBits } from "@/lib/bitset/month-bitset";
 import {
   calculateTotalCompletionsInRange,
   getCompletionRate,
@@ -16,7 +17,16 @@ let db: typeof import("@/lib/db/dexie").db;
 
 function makeMonth(habitId: string, year: number, month: number, doneDays: number[]): HabitMonth {
   const bits = Array.from({ length: 31 }, (_, index) => (doneDays.includes(index + 1) ? "1" : "0")).join("");
-  return { habitId, year, month, bits, completedCount: doneDays.length, updatedAt: "2026-03-15" };
+  return {
+    habitId,
+    year,
+    month,
+    bits,
+    graceMarkedBits: createEmptyMonthBits(),
+    graceCorrectionBits: createEmptyMonthBits(),
+    completedCount: doneDays.length,
+    updatedAt: "2026-03-15",
+  };
 }
 
 beforeAll(async () => {
