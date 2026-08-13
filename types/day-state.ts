@@ -1,5 +1,6 @@
 export type DayState =
   | "pre_start"
+  | "post_end"
   | "future"
   | "today_open"
   | "today_done"

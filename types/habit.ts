@@ -3,8 +3,11 @@ export interface Habit {
   name: string;
   color: string;
   startDate: string;
+  endDate?: string | null;
   createdAt: string;
 }
+
+export type HabitStatus = "active" | "ended";
 
 export interface HabitMonth {
   habitId: string;
@@ -27,6 +30,7 @@ export interface HabitStats {
 
 export interface HabitMetrics {
   startDate: string;
+  endDate?: string | null;
   daysSinceStart: number;
   totalCompletions: number;
   completionRate: number;
