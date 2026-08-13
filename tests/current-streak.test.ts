@@ -68,4 +68,23 @@ describe("current streak", () => {
 
     await expect(calculateCurrentStreak("2026-03-09", loader)).resolves.toBe(1);
   });
+
+  it("preserves a streak ending exactly on the habit end date", async () => {
+    const august = makeMonth("h", 2026, 8, [27, 28, 29, 30]);
+    const september = makeMonth("h", 2026, 9, []);
+    const loader = async (year: number, month: number) => {
+      if (year === 2026 && month === 8) return august;
+      if (year === 2026 && month === 9) return september;
+      return undefined;
+    };
+
+    await expect(calculateCurrentStreak("2026-08-30", loader, "2026-08-01")).resolves.toBe(4);
+  });
+
+  it("does not count completions before the habit start date", async () => {
+    const march = makeMonth("h", 2026, 3, [1, 2, 3, 4, 5]);
+    const loader = async (year: number, month: number) => (year === 2026 && month === 3 ? march : undefined);
+
+    await expect(calculateCurrentStreak("2026-03-05", loader, "2026-03-03")).resolves.toBe(3);
+  });
 });

@@ -29,4 +29,18 @@ describe("longest streak", () => {
   it("returns 0 with no records", () => {
     expect(calculateLongestStreak([])).toBe(0);
   });
+
+  it("ignores completed days outside the habit tracking range", () => {
+    const august = makeMonth("h", 2026, 8, [27, 28, 29, 30, 31]);
+    const september = makeMonth("h", 2026, 9, [1, 2, 3]);
+
+    expect(calculateLongestStreak([september, august], "2026-08-01", "2026-08-30")).toBe(4);
+  });
+
+  it("calculates bounded cross-month streaks", () => {
+    const january = makeMonth("h", 2026, 1, [30, 31]);
+    const february = makeMonth("h", 2026, 2, [1, 2, 3]);
+
+    expect(calculateLongestStreak([february, january], "2026-01-30", "2026-02-03")).toBe(5);
+  });
 });

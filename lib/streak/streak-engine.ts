@@ -13,21 +13,30 @@ function isDateCompletedInMonth(record: HabitMonth | undefined, day: number): bo
 export async function calculateCurrentStreak(
   today: string,
   monthLoader: MonthLoader,
+  earliestDate?: string,
 ): Promise<number> {
   const todayYmd = getYmd(today);
   const todayRecord = await monthLoader(todayYmd.year, todayYmd.month);
-  const startDate = isDateCompletedInMonth(todayRecord, todayYmd.day) ? today : addDays(today, -1);
+  const streakStartDate = isDateCompletedInMonth(todayRecord, todayYmd.day) ? today : addDays(today, -1);
 
-  const startYmd = getYmd(startDate);
+  if (earliestDate && streakStartDate < earliestDate) {
+    return 0;
+  }
+
+  const startYmd = getYmd(streakStartDate);
   const startRecord = await monthLoader(startYmd.year, startYmd.month);
   if (!isDateCompletedInMonth(startRecord, startYmd.day)) {
     return 0;
   }
 
   let streak = 0;
-  let cursor = startDate;
+  let cursor = streakStartDate;
 
   while (true) {
+    if (earliestDate && cursor < earliestDate) {
+      break;
+    }
+
     const { year, month, day } = getYmd(cursor);
     const record = await monthLoader(year, month);
     if (!isDateCompletedInMonth(record, day)) {
@@ -81,7 +90,11 @@ export function calculateTotalCompletionsInRange(
   }, 0);
 }
 
-export function calculateLongestStreak(monthRecords: HabitMonth[]): number {
+export function calculateLongestStreak(
+  monthRecords: HabitMonth[],
+  startDate?: string,
+  endDate?: string,
+): number {
   if (monthRecords.length === 0) {
     return 0;
   }
@@ -94,6 +107,12 @@ export function calculateLongestStreak(monthRecords: HabitMonth[]): number {
   for (const record of sorted) {
     const monthDays = daysInMonth(record.year, record.month);
     for (let day = 1; day <= monthDays; day += 1) {
+      const date = `${record.year}-${String(record.month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      if ((startDate && date < startDate) || (endDate && date > endDate)) {
+        current = 0;
+        continue;
+      }
+
       if (record.bits[day - 1] === "1") {
         current += 1;
         if (current > longest) {
