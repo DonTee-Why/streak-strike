@@ -13,6 +13,7 @@ import {
   HabitRuleError,
   toggleGraceDayOnce,
   toggleToday,
+  updateHabitEndDate as updateHabitEndDateRecord,
 } from "@/lib/db/habit-service";
 import { getLocalToday, getYmd } from "@/lib/date/local-date";
 import type { MonthGridDay } from "@/lib/calendar/month-grid";
@@ -39,7 +40,8 @@ interface HabitsStoreState {
   ensureFreshToday: () => Promise<string>;
   refreshForTodayChange: (nextToday: string) => Promise<void>;
   loadHabits: () => Promise<void>;
-  addHabit: (input: { name: string; color: string; startDate: string }) => Promise<string>;
+  addHabit: (input: { name: string; color: string; startDate: string; endDate?: string | null }) => Promise<string>;
+  updateHabitEndDate: (habitId: string, endDate?: string | null) => Promise<void>;
   loadHabitCalendar: (habitId: string, year?: number, month?: number) => Promise<void>;
   moveMonth: (habitId: string, delta: number) => Promise<void>;
   toggleDate: (habitId: string, targetDate: string) => Promise<void>;
@@ -151,6 +153,25 @@ export const useHabitsStore = create<HabitsStoreState>((set, get) => {
         return habit.id;
       } catch (error) {
         set({ error: error instanceof Error ? error.message : "Failed to create habit", isLoading: false });
+        throw error;
+      }
+    },
+    async updateHabitEndDate(habitId, endDate) {
+      const today = await get().ensureFreshToday();
+      set({ isLoading: true, error: undefined });
+      try {
+        await updateHabitEndDateRecord(habitId, endDate, today);
+        await Promise.all([
+          loadHabitCalendarForToday(habitId, get().viewedYear, get().viewedMonth, today),
+          loadHabitsForToday(today),
+        ]);
+        set({ isLoading: false });
+      } catch (error) {
+        if (error instanceof HabitRuleError) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+        set({ error: error instanceof Error ? error.message : "Failed to update habit", isLoading: false });
         throw error;
       }
     },

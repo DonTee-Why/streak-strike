@@ -19,6 +19,7 @@ export function useHabitCalendar() {
       loadHabitCalendar: state.loadHabitCalendar,
       moveMonth: state.moveMonth,
       toggleDate: state.toggleDate,
+      updateHabitEndDate: state.updateHabitEndDate,
       deleteHabit: state.deleteHabit,
     })),
   );
