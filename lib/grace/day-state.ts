@@ -8,6 +8,7 @@ interface DeriveDayStateInput {
   wasGraceMarked?: boolean;
   wasGraceCorrectionUsed?: boolean;
   startDate?: string;
+  endDate?: string | null;
 }
 
 export function deriveDayState({
@@ -17,9 +18,14 @@ export function deriveDayState({
   wasGraceMarked = false,
   wasGraceCorrectionUsed = false,
   startDate,
+  endDate,
 }: DeriveDayStateInput): DayState {
   if (startDate && targetDate < startDate) {
     return "pre_start";
+  }
+
+  if (endDate && targetDate > endDate) {
+    return "post_end";
   }
 
   const delta = diffCalendarDays(targetDate, today);

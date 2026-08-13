@@ -20,11 +20,12 @@ export function buildMonthGrid(input: {
   month: number;
   today: string;
   startDate?: string;
+  endDate?: string | null;
   isCompletedForDate: (date: string) => boolean;
   wasGraceMarkedForDate?: (date: string) => boolean;
   wasGraceCorrectionUsedForDate?: (date: string) => boolean;
 }): MonthGridDay[] {
-  const { year, month, today, startDate, isCompletedForDate } = input;
+  const { year, month, today, startDate, endDate, isCompletedForDate } = input;
   const total = daysInMonth(year, month);
   const offset = firstDayOffset(year, month);
   const firstOfMonth = formatLocalDate(new Date(year, month - 1, 1, 12));
@@ -41,6 +42,7 @@ export function buildMonthGrid(input: {
       wasGraceMarked: input.wasGraceMarkedForDate?.(date) ?? false,
       wasGraceCorrectionUsed: input.wasGraceCorrectionUsedForDate?.(date) ?? false,
       startDate,
+      endDate,
     });
     cells.push({ date, day: getYmd(date).day, inMonth: false, state, completed, markable: isMarkableDayState(state) });
   }
@@ -55,6 +57,7 @@ export function buildMonthGrid(input: {
       wasGraceMarked: input.wasGraceMarkedForDate?.(date) ?? false,
       wasGraceCorrectionUsed: input.wasGraceCorrectionUsedForDate?.(date) ?? false,
       startDate,
+      endDate,
     });
     cells.push({ date, day, inMonth: true, state, completed, markable: isMarkableDayState(state) });
   }
@@ -72,6 +75,7 @@ export function buildMonthGrid(input: {
       wasGraceMarked: input.wasGraceMarkedForDate?.(date) ?? false,
       wasGraceCorrectionUsed: input.wasGraceCorrectionUsedForDate?.(date) ?? false,
       startDate,
+      endDate,
     });
     cells.push({ date, day: getYmd(date).day, inMonth: false, state, completed, markable: isMarkableDayState(state) });
   }

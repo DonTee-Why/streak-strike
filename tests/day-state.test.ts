@@ -24,6 +24,30 @@ describe("day state derivation", () => {
     );
   });
 
+  it("classifies days after the habit end date as post-end", () => {
+    expect(
+      deriveDayState({
+        targetDate: "2026-03-11",
+        today,
+        isCompleted: false,
+        startDate: "2026-03-01",
+        endDate: "2026-03-10",
+      }),
+    ).toBe("post_end");
+  });
+
+  it("treats the habit end date as a normal active-range day", () => {
+    expect(
+      deriveDayState({
+        targetDate: "2026-03-09",
+        today,
+        isCompleted: false,
+        startDate: "2026-03-01",
+        endDate: "2026-03-09",
+      }),
+    ).toBe("today_open");
+  });
+
   it("classifies grace states", () => {
     expect(deriveDayState({ targetDate: "2026-03-08", today, isCompleted: false })).toBe("grace_open");
     expect(deriveDayState({ targetDate: "2026-03-07", today, isCompleted: true })).toBe("grace_done_locked");
