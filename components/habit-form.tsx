@@ -8,6 +8,7 @@ interface HabitFormValues {
   name: string;
   color: string;
   startDate: string;
+  endDate?: string | null;
 }
 
 interface HabitFormProps {
@@ -20,6 +21,7 @@ export function HabitForm({ onSubmit, isSubmitting }: HabitFormProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("#D4A373");
   const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -27,7 +29,7 @@ export function HabitForm({ onSubmit, isSubmitting }: HabitFormProps) {
       return;
     }
 
-    await onSubmit({ name: name.trim(), color, startDate });
+    await onSubmit({ name: name.trim(), color, startDate, endDate: endDate || null });
   }
 
   return (
@@ -62,6 +64,19 @@ export function HabitForm({ onSubmit, isSubmitting }: HabitFormProps) {
           onChange={(event) => setStartDate(event.target.value)}
           className="w-full rounded-lg border border-line bg-white px-3 py-2"
         />
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="end-date" className="text-sm font-medium">End Date (optional)</label>
+        <input
+          id="end-date"
+          type="date"
+          value={endDate}
+          min={startDate}
+          onChange={(event) => setEndDate(event.target.value)}
+          className="w-full rounded-lg border border-line bg-white px-3 py-2"
+        />
+        <p className="text-xs text-muted">Leave empty to track indefinitely.</p>
       </div>
 
       <button

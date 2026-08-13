@@ -6,7 +6,7 @@ import { HabitCard } from "@/components/habit-card";
 import { useHabits } from "@/hooks/use-habits";
 
 export default function HabitListPage() {
-  const { habits, isLoading, error, loadHabits } = useHabits();
+  const { today, habits, isLoading, error, loadHabits } = useHabits();
 
   useEffect(() => {
     void loadHabits();
@@ -40,7 +40,7 @@ export default function HabitListPage() {
 
       <section className="grid gap-3">
         {habits.map((item) => (
-          <HabitCard key={item.habit.id} habit={item.habit} currentStreak={item.currentStreak} />
+          <HabitCard key={item.habit.id} habit={item.habit} currentStreak={item.currentStreak} today={today} />
         ))}
       </section>
     </main>

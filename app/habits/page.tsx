@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CalendarGrid } from "@/components/calendar-grid";
 import { parseLocalDate } from "@/lib/date/local-date";
+import { getHabitStatus } from "@/lib/habit/lifecycle";
 import { useHabitCalendar } from "@/hooks/use-habit-calendar";
 import { useHabits } from "@/hooks/use-habits";
 import type { PeriodRecord, PeriodStats, TrendDirection, WeekdayStats } from "@/types/habit";
@@ -135,6 +136,7 @@ function HabitCalendarScreen() {
   const { loadHabits } = useHabits();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
+  const [endDateInput, setEndDateInput] = useState("");
   const [activeTab, setActiveTab] = useState<HabitTab>("calendar");
 
   const {
@@ -150,6 +152,7 @@ function HabitCalendarScreen() {
     loadHabitCalendar,
     moveMonth,
     toggleDate,
+    updateHabitEndDate,
     deleteHabit,
   } = useHabitCalendar();
 
@@ -158,6 +161,10 @@ function HabitCalendarScreen() {
       void loadHabitCalendar(habitId);
     }
   }, [habitId, loadHabitCalendar]);
+
+  useEffect(() => {
+    setEndDateInput(currentHabit?.endDate ?? "");
+  }, [currentHabit?.endDate]);
 
   async function handleBack() {
     await loadHabits();
@@ -177,6 +184,20 @@ function HabitCalendarScreen() {
       // Store state already captures the user-facing error.
     }
   }
+
+  async function handleSaveEndDate() {
+    if (!habitId) {
+      return;
+    }
+
+    try {
+      await updateHabitEndDate(habitId, endDateInput || null);
+    } catch {
+      // Store state already captures the user-facing error.
+    }
+  }
+
+  const habitStatus = currentHabit ? getHabitStatus(currentHabit, today) : "active";
 
   if (!habitId) {
     return (
@@ -202,6 +223,12 @@ function HabitCalendarScreen() {
         <div className="text-right">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">Habit Calendar</p>
           <p className="text-sm font-medium text-ink">{currentHabit?.name ?? "Loading habit..."}</p>
+          {currentHabit?.endDate ? (
+            <p className="mt-1 text-xs text-muted">
+              {compactDateLabel(currentHabit.startDate)} - {compactDateLabel(currentHabit.endDate)}
+              {habitStatus === "ended" ? " - Ended" : ""}
+            </p>
+          ) : null}
         </div>
       </header>
 
@@ -250,8 +277,9 @@ function HabitCalendarScreen() {
       {activeTab === "insights" && metrics && insights ? (
         <section className="space-y-4">
           <div className="rounded-lg border border-line bg-white/85 p-4 shadow-sm">
-            <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
               <MetricCard label="Start Date" value={compactDateLabel(metrics.startDate)} />
+              {metrics.endDate ? <MetricCard label="End Date" value={compactDateLabel(metrics.endDate)} /> : null}
               <MetricCard label="Days Since Start" value={metrics.daysSinceStart} />
               <MetricCard label="Total Completions" value={metrics.totalCompletions} />
               <MetricCard label="Completion Rate" value={formatCompletionRate(metrics.completionRate)} />
@@ -326,6 +354,32 @@ function HabitCalendarScreen() {
 
       <section className="space-y-3 rounded-lg border border-line bg-white/80 p-4 text-sm text-muted">
         {activeTab === "calendar" ? <p>Legend: X = completed, highlighted = markable, muted = locked/missed.</p> : null}
+        {currentHabit ? (
+          <div className="grid gap-2 border-b border-line pb-3 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div className="space-y-1">
+              <label htmlFor="habit-end-date" className="text-xs font-semibold uppercase tracking-wide text-muted">
+                End Date
+              </label>
+              <input
+                id="habit-end-date"
+                type="date"
+                value={endDateInput}
+                min={currentHabit.startDate}
+                onChange={(event) => setEndDateInput(event.target.value)}
+                className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm text-ink"
+              />
+              <p className="text-xs text-muted">Leave empty to continue indefinitely.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleSaveEndDate()}
+              disabled={isLoading || endDateInput === (currentHabit.endDate ?? "")}
+              className="rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink disabled:opacity-50"
+            >
+              Save End Date
+            </button>
+          </div>
+        ) : null}
         <button
           type="button"
           onClick={() => setIsRulesModalOpen(true)}
