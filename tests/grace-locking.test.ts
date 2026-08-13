@@ -77,4 +77,39 @@ describe("grace window locking", () => {
     expect(preStartDay?.completed).toBe(false);
     expect(preStartDay?.markable).toBe(false);
   });
+
+  it("allows backfilling the end date inside grace after the habit ended", async () => {
+    const habit = await createHabit({
+      name: "Challenge",
+      color: "#000000",
+      startDate: "2026-03-01",
+      endDate: "2026-03-10",
+    });
+
+    await markGraceDayOnce(habit.id, "2026-03-10", "2026-03-11");
+
+    const days = await getHabitCalendarMonth({ habitId: habit.id, year: 2026, month: 3, today: "2026-03-11" });
+    const endDay = days.find((day) => day.date === "2026-03-10");
+    const postEndDay = days.find((day) => day.date === "2026-03-11");
+
+    expect(endDay?.state).toBe("grace_done_editable");
+    expect(endDay?.completed).toBe(true);
+    expect(endDay?.markable).toBe(true);
+    expect(postEndDay?.state).toBe("post_end");
+    expect(postEndDay?.markable).toBe(false);
+  });
+
+  it("prevents marking dates after the habit end date", async () => {
+    const habit = await createHabit({
+      name: "Sprint",
+      color: "#000000",
+      startDate: "2026-03-01",
+      endDate: "2026-03-10",
+    });
+
+    await expect(markGraceDayOnce(habit.id, "2026-03-11", "2026-03-12")).rejects.toThrow(
+      "Only editable grace-window days can be changed",
+    );
+    await expect(toggleToday(habit.id, "2026-03-11")).rejects.toThrow("Only today can be changed");
+  });
 });

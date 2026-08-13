@@ -13,6 +13,7 @@ let getHabitMetrics: typeof import("@/lib/db/habit-service").getHabitMetrics;
 let getTotalCompletions: typeof import("@/lib/db/habit-service").getTotalCompletions;
 let markGraceDayOnce: typeof import("@/lib/db/habit-service").markGraceDayOnce;
 let toggleToday: typeof import("@/lib/db/habit-service").toggleToday;
+let updateHabitEndDate: typeof import("@/lib/db/habit-service").updateHabitEndDate;
 let db: typeof import("@/lib/db/dexie").db;
 
 function makeMonth(habitId: string, year: number, month: number, doneDays: number[]): HabitMonth {
@@ -38,6 +39,7 @@ beforeAll(async () => {
   getTotalCompletions = service.getTotalCompletions;
   markGraceDayOnce = service.markGraceDayOnce;
   toggleToday = service.toggleToday;
+  updateHabitEndDate = service.updateHabitEndDate;
   db = dexie.db;
 });
 
@@ -77,6 +79,7 @@ describe("habit metrics", () => {
 
     expect(metrics).toEqual({
       startDate: "2026-03-12",
+      endDate: null,
       daysSinceStart: 4,
       totalCompletions: 2,
       completionRate: 0.5,
@@ -91,6 +94,7 @@ describe("habit metrics", () => {
     expect(await getTotalCompletions(habit.id, "2026-03-15")).toBe(0);
     await expect(getHabitMetrics(habit.id, "2026-03-15")).resolves.toEqual({
       startDate: "2026-03-15",
+      endDate: null,
       daysSinceStart: 1,
       totalCompletions: 0,
       completionRate: 0,
@@ -103,5 +107,61 @@ describe("habit metrics", () => {
     await expect(createHabit({ name: "Read", color: "#000000", startDate: "2099-01-01" })).rejects.toThrow(
       "Start date must be today or earlier",
     );
+  });
+
+  it("uses today for active finite habit metrics", async () => {
+    const habit = await createHabit({
+      name: "Write",
+      color: "#000000",
+      startDate: "2026-03-10",
+      endDate: "2026-03-20",
+    });
+
+    await markGraceDayOnce(habit.id, "2026-03-12", "2026-03-15");
+    await toggleToday(habit.id, "2026-03-15");
+
+    await expect(getHabitMetrics(habit.id, "2026-03-15")).resolves.toMatchObject({
+      startDate: "2026-03-10",
+      endDate: "2026-03-20",
+      daysSinceStart: 6,
+      totalCompletions: 2,
+      completionRate: 2 / 6,
+    });
+  });
+
+  it("stops tracking days and completion counts after the habit ends", async () => {
+    const habit = await createHabit({
+      name: "Program",
+      color: "#000000",
+      startDate: "2026-03-01",
+      endDate: "2026-03-05",
+    });
+
+    await db.habitMonths.put(makeMonth(habit.id, 2026, 3, [1, 3, 5, 6, 7]));
+
+    await expect(getHabitMetrics(habit.id, "2026-03-20")).resolves.toMatchObject({
+      startDate: "2026-03-01",
+      endDate: "2026-03-05",
+      daysSinceStart: 5,
+      totalCompletions: 3,
+      completionRate: 3 / 5,
+    });
+    await expect(getTotalCompletions(habit.id, "2026-03-20")).resolves.toBe(3);
+  });
+
+  it("does not delete completion history when the end date changes", async () => {
+    const habit = await createHabit({
+      name: "Challenge",
+      color: "#000000",
+      startDate: "2026-03-01",
+      endDate: "2026-03-20",
+    });
+    await db.habitMonths.put(makeMonth(habit.id, 2026, 3, [5, 10, 15]));
+
+    await updateHabitEndDate(habit.id, "2026-03-12", "2026-03-10");
+
+    const month = await db.habitMonths.get([habit.id, 2026, 3]);
+    expect(month?.bits[14]).toBe("1");
+    await expect(getTotalCompletions(habit.id, "2026-03-20")).resolves.toBe(2);
   });
 });

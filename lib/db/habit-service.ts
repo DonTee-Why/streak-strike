@@ -1,18 +1,23 @@
 import { buildMonthGrid, type MonthGridDay } from "@/lib/calendar/month-grid";
 import { db } from "@/lib/db/dexie";
 import { deleteHabitMonths, getHabitMonth, listHabitMonths, markHabitDay, unmarkHabitDay } from "@/lib/db/habit-months-repo";
-import { createHabitRecord, deleteHabitRecord, getHabitById, listHabits } from "@/lib/db/habits-repo";
+import { createHabitRecord, deleteHabitRecord, getHabitById, listHabits, updateHabitRecord } from "@/lib/db/habits-repo";
 import { deleteHabitStats, upsertHabitStats } from "@/lib/db/stats-repo";
 import { getLocalToday, getYmd } from "@/lib/date/local-date";
 import { deriveDayState } from "@/lib/grace/day-state";
+import {
+  getEffectiveHabitEndDate,
+  getHabitTrackingDays,
+  normalizeHabitEndDate,
+  validateHabitBoundaryDates,
+  validateHabitEndDateUpdate,
+} from "@/lib/habit/lifecycle";
 import { getHabitInsights as deriveHabitInsights } from "@/lib/insights/insights-engine";
 import {
   calculateCurrentStreak,
   calculateLongestStreak,
-  calculateTotalCompletions,
   calculateTotalCompletionsInRange,
   getCompletionRate,
-  getDaysSinceStart,
 } from "@/lib/streak/streak-engine";
 import type { Habit, HabitInsights, HabitMetrics, HabitMonth } from "@/types/habit";
 
@@ -58,11 +63,13 @@ async function refreshStats(habitId: string, today = getLocalToday()): Promise<v
     throw new HabitRuleError("Habit not found");
   }
 
-  const currentStreak = await calculateCurrentStreak(today, async (year, month) =>
+  const effectiveEndDate = getEffectiveHabitEndDate(habit, today);
+  const currentStreak = await calculateCurrentStreak(effectiveEndDate, async (year, month) =>
     getHabitMonth(habitId, year, month),
+    habit.startDate,
   );
-  const longestStreak = calculateLongestStreak(months);
-  const totalCompletions = calculateTotalCompletionsInRange(months, habit.startDate, today);
+  const longestStreak = calculateLongestStreak(months, habit.startDate, effectiveEndDate);
+  const totalCompletions = calculateTotalCompletionsInRange(months, habit.startDate, effectiveEndDate);
 
   await upsertHabitStats({
     habitId,
@@ -73,12 +80,20 @@ async function refreshStats(habitId: string, today = getLocalToday()): Promise<v
   });
 }
 
-export async function createHabit(input: { name: string; color: string; startDate: string }): Promise<Habit> {
+export async function createHabit(input: {
+  name: string;
+  color: string;
+  startDate: string;
+  endDate?: string | null;
+}): Promise<Habit> {
   const today = getLocalToday();
-  try {
-    getDaysSinceStart(input.startDate, today);
-  } catch {
-    throw new HabitRuleError("Start date must be today or earlier");
+  const boundaryError = validateHabitBoundaryDates({
+    startDate: input.startDate,
+    endDate: input.endDate,
+    today,
+  });
+  if (boundaryError) {
+    throw new HabitRuleError(boundaryError);
   }
 
   const habit: Habit = {
@@ -86,6 +101,7 @@ export async function createHabit(input: { name: string; color: string; startDat
     name: input.name.trim(),
     color: input.color,
     startDate: input.startDate,
+    endDate: normalizeHabitEndDate(input.endDate),
     createdAt: today,
   };
 
@@ -115,14 +131,50 @@ export async function getHabit(habitId: string): Promise<Habit | undefined> {
   return getHabitById(habitId);
 }
 
+export async function updateHabitEndDate(
+  habitId: string,
+  nextEndDate?: string | null,
+  today = getLocalToday(),
+): Promise<Habit> {
+  const habit = await getHabitById(habitId);
+  if (!habit) {
+    throw new HabitRuleError("Habit not found");
+  }
+
+  const validationError = validateHabitEndDateUpdate({ habit, nextEndDate, today });
+  if (validationError) {
+    throw new HabitRuleError(validationError);
+  }
+
+  const updated: Habit = {
+    ...habit,
+    endDate: normalizeHabitEndDate(nextEndDate),
+  };
+
+  await updateHabitRecord(updated);
+  await refreshStats(habitId, today);
+  return updated;
+}
+
 export async function toggleToday(habitId: string, today = getLocalToday()): Promise<void> {
   const habit = await getHabitById(habitId);
   if (!habit) {
     throw new HabitRuleError("Habit not found");
   }
 
+  const dayState = deriveDayState({
+    targetDate: today,
+    today,
+    isCompleted: await isCompletedOnDate(habitId, today),
+    startDate: habit.startDate,
+    endDate: habit.endDate,
+  });
+  if (dayState !== "today_open" && dayState !== "today_done") {
+    throw new HabitRuleError("Only today can be changed");
+  }
+
   const { year, month, day } = getYmd(today);
-  const completed = await isCompletedOnDate(habitId, today);
+  const completed = dayState === "today_done";
 
   if (completed) {
     await unmarkHabitDay(habitId, year, month, day);
@@ -151,6 +203,7 @@ export async function toggleGraceDayOnce(
     isCompleted: completed,
     ...graceHistory,
     startDate: habit.startDate,
+    endDate: habit.endDate,
   });
 
   const { year, month, day } = getYmd(targetDate);
@@ -207,6 +260,7 @@ export async function getHabitCalendarMonth(input: {
     month,
     today,
     startDate: habit.startDate,
+    endDate: habit.endDate,
     isCompletedForDate: (date) => {
       const { year: y, month: m, day } = getYmd(date);
       const record = monthMap.get(`${y}-${m}`);
@@ -243,15 +297,21 @@ export async function getHabitStreaks(
   totalCompletions: number;
 }> {
   const months = await listHabitMonths(habitId);
+  const habit = await getHabitById(habitId);
+  if (!habit) {
+    throw new HabitRuleError("Habit not found");
+  }
+  const effectiveEndDate = getEffectiveHabitEndDate(habit, today);
 
-  const currentStreak = await calculateCurrentStreak(today, async (year, month) =>
+  const currentStreak = await calculateCurrentStreak(effectiveEndDate, async (year, month) =>
     getHabitMonth(habitId, year, month),
+    habit.startDate,
   );
 
   return {
     currentStreak,
-    longestStreak: calculateLongestStreak(months),
-    totalCompletions: calculateTotalCompletions(months),
+    longestStreak: calculateLongestStreak(months, habit.startDate, effectiveEndDate),
+    totalCompletions: calculateTotalCompletionsInRange(months, habit.startDate, effectiveEndDate),
   };
 }
 
@@ -262,7 +322,7 @@ export async function getTotalCompletions(habitId: string, today = getLocalToday
   }
 
   const months = await listHabitMonths(habitId);
-  return calculateTotalCompletionsInRange(months, habit.startDate, today);
+  return calculateTotalCompletionsInRange(months, habit.startDate, getEffectiveHabitEndDate(habit, today));
 }
 
 export async function getHabitMetrics(habitId: string, today = getLocalToday()): Promise<HabitMetrics> {
@@ -271,7 +331,7 @@ export async function getHabitMetrics(habitId: string, today = getLocalToday()):
     throw new HabitRuleError("Habit not found");
   }
 
-  const daysSinceStart = getDaysSinceStart(habit.startDate, today);
+  const daysSinceStart = getHabitTrackingDays(habit, today);
   const [streaks, totalCompletions] = await Promise.all([
     getHabitStreaks(habitId, today),
     getTotalCompletions(habitId, today),
@@ -279,6 +339,7 @@ export async function getHabitMetrics(habitId: string, today = getLocalToday()):
 
   return {
     startDate: habit.startDate,
+    endDate: normalizeHabitEndDate(habit.endDate),
     daysSinceStart,
     totalCompletions,
     completionRate: getCompletionRate(totalCompletions, daysSinceStart),
@@ -294,5 +355,5 @@ export async function getHabitInsights(habitId: string, today = getLocalToday())
   }
 
   const months = await listHabitMonths(habitId);
-  return deriveHabitInsights(months, habit.startDate, today);
+  return deriveHabitInsights(months, habit.startDate, getEffectiveHabitEndDate(habit, today));
 }
